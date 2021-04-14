@@ -128,12 +128,12 @@ class LSTM_EncoderDecoder(nn.Module):
                     encoder_hidden = self.encoder.init_hidden(batch_size)
                     # Initialise gradient to zero
                     optimizer.zero_grad()
-                    
                     # Call Encoder
                     encoder_output, encoder_hidden = self.encoder(input_batch)
                     # Initialise Decoder
                     decoder_input = input_batch[-1, :, :] # shape (batch_size, input_size)
                     decoder_hidden = encoder_hidden
+                    #print(encoder_hidden.shape)
                     
                     # Iterate by values to predict
                     for t in range(target_len):

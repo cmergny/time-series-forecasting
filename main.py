@@ -31,15 +31,13 @@ x_train, y_train = setdata.WindowedDataset(Data_train, iw, ow, stride, nbr_featu
 x_valid, y_valid = setdata.WindowedDataset(Data_test, iw, ow, stride, nbr_features=Data_train.shape[1])
 x_train = x_train + np.random.normal(0, 0.01, x_train.shape)
 # Convert tensor and set device
-#x_train, y_train, x_valid, y_valid = setdata.Convert2Torch(x_train, y_train, x_valid, y_valid, device=device)
-#x_train = np.random.permutation(x_train)
+x_train, y_train, x_valid, y_valid = setdata.Convert2Torch(x_train, y_train, x_valid, y_valid, device=device)
 
 
-éé"e"
 # %% Defining and Training Model
 model = lstm.LSTM_EncoderDecoder(input_size=x_train.shape[2], hidden_size=5).to(device)
 # Train model
-loss = model.train_model(x_train, y_train, x_valid, y_valid, n_epochs=5000, target_len=ow, batch_size=8, learning_rate=0.02, wd=1e-7, device=device)
+loss = model.train_model(x_train, y_train, x_valid, y_valid, n_epochs=1, target_len=ow, batch_size=8, learning_rate=0.02, wd=1e-7, device=device)
 plt.plot(np.log10(loss))
 
 # %% Test Model
