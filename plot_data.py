@@ -1,5 +1,6 @@
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 def PlotPredictions(X, Y, P, batch, mode, title='', name=''):
     X, Y = np.array(X.to("cpu").detach()), np.array(Y.to("cpu").detach())
