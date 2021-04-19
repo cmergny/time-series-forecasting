@@ -22,19 +22,20 @@ m = 50
 bs = 16
 # Read and generate dataset
 #data = setdata.Importdata(file_name='coeff', modes=range(m, m+10))
-data = setdata.GenerateData(tf=20*np.pi, n=2000, freq=[2,3,4,5])
+data = setdata.GenerateData(tf=50*np.pi, n=2000, freq=range(1,6))
 data_train, data_test = setdata.MakeDataset(data, split=0.7)
 # Generate Inputs and Targets
-iw, ow, stride = 200, 50, 50 # input window, output window, stride
+iw, ow, stride = 500, 80, 50 # input window, output window, stride
 x_train, y_train = setdata.WindowedDataset(data_train, iw, ow, stride, nbr_features=data_train.shape[1]) 
 x_valid, y_valid = setdata.WindowedDataset(data_test, iw, ow, stride, nbr_features=data_test.shape[1])
-x_train = x_train + np.random.normal(0, 0.02, x_train.shape)
+x_train = x_train + np.random.normal(0, 0.05, x_train.shape)
+plt.plot(x_train[:,1,:])
 # Convert tensor and set device
 x_train, y_train, x_valid, y_valid = setdata.Convert2Torch(x_train, y_train, x_valid, y_valid, device=device)
 
 # %% Defining and Training Model
 model = lstm.LSTM_EncoderDecoder(input_size=x_train.shape[2], hidden_size=10).to(device)
-loss = model.train_model(x_train, y_train, x_valid, y_valid, n_epochs=400, target_len=ow, batch_size=8, learning_rate=0.02, wd=1e-7, device=device)
+loss = model.train_model(x_train, y_train, x_valid, y_valid, n_epochs=500, target_len=ow, batch_size=8, learning_rate=0.02, wd=1e-7, device=device)
 plt.plot(np.log10(loss))
 
 # %% Test Model

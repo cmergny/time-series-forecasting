@@ -174,10 +174,8 @@ class LSTM_EncoderDecoder(nn.Module):
         """
         # Encode input tensor by calling Encoder
         input_tensor = input_tensor.unsqueeze(1) # add in a batch size of 1
-        # self.encoder.hidden = self.encoder.init_hidden(1)
-        # print(self.encoder.hidden)
         encoder_output, encoder_hidden = self.encoder(input_tensor)
-
+        
         # Initialize tensor for predictions
         outputs = torch.zeros(target_len, input_tensor.shape[2])
         # Initialize decoder inputs

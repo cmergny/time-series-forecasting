@@ -72,6 +72,8 @@ def GenerateData(tf=7*np.pi, n=1000, freq=[1]):
     t = np.linspace(0., tf, n)
     data = np.zeros((t.size, len(freq)))
     for i, f in enumerate(freq):
-        data[:, i] = np.sin(3*t)*np.cos(f*t)
+        data[:, i] = np.sin(f/8*t)+np.cos(f*t)
+        #data[:, i] -= np.mean(data[:, i]) # remove mean value
+        #data[:, i] /= np.max(np.abs(data[:, i])) # normalize
     return(data)
 
