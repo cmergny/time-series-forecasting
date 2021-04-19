@@ -52,7 +52,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    """ Decodes hidden state output by encoder """
+    """ Use hidden state init by Encoder to make predictions """
     
     def __init__(self, input_size, hidden_size, num_layers=1):
         """ Initialising var and defining LSTM """
@@ -144,20 +144,15 @@ class LSTM_EncoderDecoder(nn.Module):
                       
                     # Computing loss
                     loss = criterion(outputs, target_batch)
-                    batch_loss += loss.mean()
+                    batch_loss += loss
                     # Backpropagating 
-                    loss.mean().backward()
+                    loss.backward()
                     optimizer.step()
                     
                 # Computing Loss FOR epoch
                 batch_loss /= nbr_batches 
                 Losses[ep] = batch_loss
 
-                # Test loss
-                #i = 1
-                #output_test = self.predict(input_test[:,i,:], target_len)
-                #output_test = torch.from_numpy(output_test).float().to(device)
-                #test_loss = criterion(output_test[:,:], target_test[:,i,:])
                 # Progress bar
                 tr.set_postfix(loss = "{0:.2e}".format(batch_loss)) #, test_loss = "{0:.2e}".format(test_loss))
                 

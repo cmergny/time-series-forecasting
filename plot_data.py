@@ -1,10 +1,12 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 
 def PlotPredictions(X, Y, P, batch, mode, title='', name=''):
     P = P.reshape(P.shape[0], 1, P.shape[-1])
-    X, Y = np.array(X.to("cpu").detach()), np.array(Y.to("cpu").detach())
+    if type(X) == torch.Tensor:
+        X, Y = np.array(X.to("cpu").detach()), np.array(Y.to("cpu").detach())
     len_x = len(X[:, batch, mode])
     ow = Y.shape[0]
     target_len = P.shape[0]
