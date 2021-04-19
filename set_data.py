@@ -7,22 +7,19 @@ Created on Wed Mar 24 19:28:56 2021
 
 import torch
 import numpy as np
+import matplotlib.pyplot as plt
 
-def ReadCoeff(file_name = 'coeff'):
+def ImportData(file_name = 'coeff', modes=range(10), nbr_snaps=300, index=2):
     """ Open and read coeff file
-        returns an array of length (# of modes, # of snapshots, 3) """    
+        returns an array of length (# of modes, # of snapshots, 3)
+        Truncate and normalize """    
     data = np.loadtxt(file_name).reshape(305, 305, 3) # Time, Mode, an(t) 
-    return(data)
-
-def TruncateNormData(ar, modes=[1, 2, 3, 4], nbr_snaps=300, index=2):
-    """Truncate the input data according to values of interest
-    and normalize"""
-    X = ar[modes, :nbr_snaps, index]
-    X = np.transpose(X)
+    data = data[modes, :nbr_snaps, index]
+    data = np.transpose(data)
     for i in range(len(modes)):
-        X[:, i] -= np.mean(X[:, i]) # remove mean value
-        X[:, i] /= np.max(np.abs(X[:, i])) # normalize
-    return(X)
+        data[:, i] -= np.mean(data[:, i]) # remove mean value
+        data[:, i] /= np.max(np.abs(data[:, i])) # normalize
+    return(data)
 
 def Convert2Torch(*args, device):
     """Convert numpy array to torch tensor with device cpu or gpu."""
@@ -70,3 +67,11 @@ def WindowedDataset(Data, iw=5, ow=1, stride=1, nbr_features=1):
             Y[:, i, j] = Data[end:end+ow, j]
             
     return X, Y
+
+def GenerateData(tf=7*np.pi, n=1000, freq=[1]):
+    t = np.linspace(0., tf, n)
+    data = np.zeros((t.size, len(freq)))
+    for i, f in enumerate(freq):
+        data[:, i] = np.sin(3*t)*np.cos(f*t)
+    return(data)
+
