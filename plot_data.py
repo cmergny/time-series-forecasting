@@ -4,16 +4,15 @@ import numpy as np
 import torch
 
 def PlotPredictions(X, Y, P, batch, mode, title='', name=''):
-    P = P.reshape(P.shape[0], 1, P.shape[-1])
     if type(X) == torch.Tensor:
-        X, Y = np.array(X.to("cpu").detach()), np.array(Y.to("cpu").detach())
+        X, Y, P = np.array(X.to("cpu").detach()), np.array(Y.to("cpu").detach()), np.array(P.to("cpu").detach())
     len_x = len(X[:, batch, mode])
     ow = Y.shape[0]
     target_len = P.shape[0]
     figure, ax = plt.subplots()
     ax.plot(range(len_x), X[:, batch, mode], label='Data')
-    ax.plot(range(len_x, len_x+ow), Y[:, batch, mode], color='green',label='target')
-    ax.plot(range(len_x, len_x+target_len), P[:, 0, mode], color='orange', label='predictions')
+    ax.plot(range(len_x, len_x+ow), Y[:, batch, mode],'o', color='green',label='target')
+    ax.plot(range(len_x, len_x+target_len), P[:, batch, mode], 'x', color='orange', label='predictions')
     ax.set_ylabel('coeff')
     ax.set_xlabel('timesteps')
     plt.title(title)
