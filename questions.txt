@@ -1,10 +1,12 @@
--construire lstm simple sans AE voir la diff
--pertinence du lstm bidirectionnel
+# construire lstm simple sans AE voir la diff --> 
+- pertinence du lstm bidirectionnel 
 -regarder dans le cours s'il y a des infos sur la dimension
     redu de dimension non lineaire
     def une distance entre deux vecteurs (gaussienne)
-- tester une prediction avec seul point --> ca marche à peu près !
+# tester une prediction avec seul point --> ca marche à peu près !
 - fonctionnement en detail des lstm AE
 - changer valid test par les modes plutot que seq len
-- changer modele class by a forward pass
+# changer modele class by a forward pass
 # Augmenter la taille des hidden layers m'a permit de mieux apprendre
+- try changing learning by pack of modes to a single model
+- making a real autoencoder ?

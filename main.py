@@ -5,8 +5,8 @@ Created on Wed Mar 24 19:28:56 2021
 @author: Cyril
 """
 ### IMPORTS
-%reload_ext autoreload
-%autoreload 2
+#%reload_ext autoreload
+#%autoreload 2
 
 import torch
 import numpy as np
@@ -26,7 +26,7 @@ bs = 4
 data = setdata.GenerateData(tf=4*np.pi, n=500, freq=range(4,15))
 data_train, data_test = setdata.MakeDataset(data, split=0.7)
 # Generate Inputs and Targets
-iw, ow, stride = 120, 1, 10 # input window, output window, stride
+iw, ow, stride = 120, 33, 10 # input window, output window, stride
 x_train, y_train = setdata.WindowedDataset(data_train, iw, ow, stride, nbr_features=data_train.shape[1]) 
 x_valid, y_valid = setdata.WindowedDataset(data_test, iw, ow, stride, nbr_features=data_test.shape[1])
 #x_train = x_train + np.random.normal(0, 0.02, x_train.shape)
@@ -35,21 +35,21 @@ plt.plot(x_train[:, 0, 10])
 x_train, y_train, x_valid, y_valid = setdata.Convert2Torch(x_train, y_train, x_valid, y_valid, device=device)
 
 # %% Defining and Training Model
-#model = lstm.LSTM_EncoderDecoder(input_size=x_train.shape[2], hidden_size=20).to(device)
-model = lstm.SimpleLSTM(input_size=x_train.shape[2], hidden_size=20).to(device)
-loss = lstm.TrainModel(model, x_train, y_train, n_epochs=200, target_len=ow, batch_size=bs, learning_rate=0.03, wd=1e-9)
+model = lstm.LSTM_EncoderDecoder(input_size=x_train.shape[2], hidden_size=20).to(device)
+#model = lstm.SimpleLSTM(input_size=x_train.shape[2], hidden_size=20).to(device)
+loss = lstm.TrainModel(model, x_train, y_train, n_epochs=100, target_len=ow, batch_size=bs, learning_rate=0.03, wd=1e-9)
 plt.plot(np.log10(loss))
 
 # %% Valid Model
-mode = 6
+mode = 10
 batch = 2
-p_valid = lstm.Predict(model, x_valid[:, :bs, :], target_len=40)
+p_valid = lstm.Predict(model, x_valid[:, :bs, :], target_len=33)
 plotdata.PlotPredictions(x_valid, y_valid, p_valid, batch, mode)
 
 # %% Plot train
 mode = 4
 batch = 1
-p_train = lstm.Predict(model, x_train[:, :bs, :], target_len=100)
+p_train = lstm.Predict(model, x_train[:, :bs, :], target_len=33)
 plotdata.PlotPredictions(x_train, y_train, p_train, batch, mode)
 
 # %% Saving and loading model

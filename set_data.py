@@ -9,7 +9,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-def ImportData(file_name = 'coeff', modes=range(10), nbr_snaps=300, index=2):
+def ImportData(file_name = 'Data/coeff', modes=range(10), nbr_snaps=300, index=2):
     """ Open and read coeff file
         returns an array of length (# of modes, # of snapshots, 3)
         Truncate and normalize """    
@@ -77,3 +77,4 @@ def GenerateData(tf=2*np.pi, n=1000, freq=[1]):
         data[:, i] /= np.max(np.abs(data[:, i])) # normalize
     return(data)
 
+data = np.loadtxt('Data/podcoeff_12a02')

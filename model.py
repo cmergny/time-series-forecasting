@@ -21,11 +21,9 @@ class Encoder(nn.Module):
     """ Used to encode a sequence of time series """
     
     def __init__(self, input_size, hidden_size, num_layers=1):
-        """ Initialising var and defining LSTM """
+        """ Initialising var and defining LSTM 
+        shape: nn.LSTM(input_size, hidden_size, numlayers)"""
         super().__init__()
-        self.input_size = input_size   # nbr of features in input X
-        self.hidden_size = hidden_size # size of the hidden state
-        self.num_layers = num_layers   # nbr of recurrent layers
         # LSTM
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers)
         
@@ -35,6 +33,8 @@ class Encoder(nn.Module):
         --------
         lstm_out: gives all the hidden states in the sequence
         hidden: gives the hidden state & cell state of the last elt of the seq
+        ----
+        lstm_out.shape = (seqlen, bs, hidden_size) = h for all seq len
         """  
         lstm_out, self.hidden = self.lstm(input_batch) # hidden not provided : both h_0 and c_0 default to zero.
         return(lstm_out, self.hidden)
@@ -43,27 +43,23 @@ class Decoder(nn.Module):
     """ Use hidden state init by Encoder to make predictions """
     
     def __init__(self, input_size, hidden_size, num_layers=1):
-        """ Initialising var and defining LSTM """
-        super().__init__()
-        self.input_size = input_size   # nbr of features in input X
-        self.hidden_size = hidden_size # nbr of hidden state per cell
-        self.num_layers = num_layers   # nbr of recurrent layers
+        """ Initialising var and defining LSTM 
+        shape: nn.LSTM(input_size, hidden_size, numlayers)"""
+        super().__init__()  
         # LSTM
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers) #initalize
         self.linear = nn.Linear(hidden_size, input_size)
         
     def forward(self, input_batch, encoder_hidden_states):
         """
-        input_batch: input of shape (seq_len, nbr in batch, input_size)
+        input_batch: input of shape (seqlen=1, bs, hidden_size)
         encoder_hidden_states: tuple (h, c) 
-                where h.shape = (nbr_layer*nbrdirect, batch_size, hidden_size)
         --------
-        output: gives all the hidden states in the sequence (seqlen, batch_size, hidden_size)
-        hidden: gives the hidden state & cell state of the last elt of the seq
+        lstm_out.shape = (seqlen=1, bs, hiddensize) = h for all seq len
+        self.hidden.shape = (h, c)
         """  
         lstm_out, self.hidden = self.lstm(input_batch, encoder_hidden_states)
         output = self.linear(lstm_out.squeeze(0))
-
         return(output, self.hidden)
       
 class LSTM_EncoderDecoder(nn.Module):
@@ -74,19 +70,16 @@ class LSTM_EncoderDecoder(nn.Module):
     def __init__(self, input_size, hidden_size):
         """ Initialising variables with param and Encoder/Decoder classes"""
         super().__init__()
-        self.input_size = input_size   # nbr of features in input X
-        self.hidden_size = hidden_size # size of the hidden state
         self.encoder = Encoder(input_size, hidden_size)
         self.decoder = Decoder(input_size, hidden_size)
 
     def forward(self, input_batch, target_len):
         # Initialise outputs (targetlen, bs, # features)
-        batch_size = input_batch.shape[1]
-        outputs = torch.zeros(target_len, batch_size, input_batch.shape[2]).to(input_batch.device)
+        outputs = torch.zeros(target_len,  input_batch.shape[1], input_batch.shape[2]).to(input_batch.device)
         # Initialise h,c and call Encoder 
         encoder_output, encoder_hidden = self.encoder(input_batch)
         # Initialise Decoder
-        decoder_input = input_batch[-1, :, :].unsqueeze(0) # shape (batch_size, input_size)
+        decoder_input = input_batch[-1, :, :].unsqueeze(0) # shape(bs, n_features)
         decoder_hidden = encoder_hidden
         # Iterate by values to predict
         for t in range(target_len):
@@ -110,7 +103,7 @@ class SimpleLSTM(nn.Module):
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers) #initalize
         self.linear = nn.Linear(hidden_size, input_size)
                 
-    def forward(self, input_batch):
+    def forward(self, input_batch, target_len=None):
         """
         input_batch: input of shape (seq_len, nbr in batch, input_size)
         encoder_hidden_states: tuple (h, c) 
@@ -119,9 +112,11 @@ class SimpleLSTM(nn.Module):
         output: gives all the hidden states in the sequence (seqlen, batch_size, hidden_size)
         hidden: gives the hidden state & cell state of the last elt of the seq
         """
+        # ! arg target_len unused juste to be consistent
+        self.init_hidden(input_batch.shape[1], input_batch.device)
         lstm_output, self.hidden_states = self.lstm(input_batch, self.hidden_states)
         lstm_output = self.linear(lstm_output.squeeze(0))
-        return(lstm_output)
+        return(lstm_output[-1].unsqueeze(0))
     
     def init_hidden(self, batch_size, device):
         self.hidden_states = (torch.zeros(self.num_layers, batch_size, self.hidden_size).to(device),
@@ -157,15 +152,13 @@ def TrainModel(model, input_tensor, target_tensor, n_epochs, target_len,
             batch_loss = 0
             # Iterate by batch
             for b in range(nbr_batches):
-                model.init_hidden(batch_size, input_tensor.device)
                 # Select batches
                 input_batch = input_tensor[:, b:b+batch_size, :]
                 target_batch = target_tensor[:, b:b+batch_size, :]
                 # Initialise gradient to zero
                 optimizer.zero_grad()
                 # Calling model
-                #outputs = model(input_batch, target_len)
-                outputs = model(input_batch)[-1].unsqueeze(0)
+                outputs = model(input_batch, target_len)
                 # Computing loss
                 loss = criterion(outputs, target_batch)
                 batch_loss += loss
@@ -175,7 +168,6 @@ def TrainModel(model, input_tensor, target_tensor, n_epochs, target_len,
             # Computing Loss FOR epoch
             batch_loss /= nbr_batches 
             Losses[ep] = batch_loss
-            # Progress bar
             tr.set_postfix(loss = "{0:.2e}".format(batch_loss))         
     return(Losses)
                     
@@ -183,10 +175,5 @@ def TrainModel(model, input_tensor, target_tensor, n_epochs, target_len,
 def Predict(model, input_batch, target_len):
     model.eval()
     with torch.no_grad():
-        model.init_hidden(input_batch.shape[1], input_batch.device)
-        outputs = torch.zeros(target_len, input_batch.shape[1], input_batch.shape[2])
-        for t in range(target_len):
-            lstm_output = model(input_batch[:, :, :])
-            outputs[t] = lstm_output[-1].unsqueeze(0)
-            input_batch = lstm_output
+        outputs = model(input_batch[:, :, :], target_len)
         return(outputs.detach())
