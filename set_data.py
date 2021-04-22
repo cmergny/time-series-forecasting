@@ -7,15 +7,22 @@ Created on Wed Mar 24 19:28:56 2021
 
 import torch
 import numpy as np
+import pickle
 import matplotlib.pyplot as plt
 
-def ImportData(file_name = 'Data/coeff', modes=range(10), nbr_snaps=300, index=2):
+def ImportData(file_name='Data/coeff', modes=range(10), nbr_snaps=300, index=2):
     """ Open and read coeff file
         returns an array of length (# of modes, # of snapshots, 3)
-        Truncate and normalize """    
-    data = np.loadtxt(file_name).reshape(305, 305, 3) # Time, Mode, an(t) 
-    data = data[modes, :nbr_snaps, index]
-    data = np.transpose(data)
+        Truncate and normalize """ 
+    if file_name[-4:] == '.dat': 
+        with open("Data/podcoeff_095a05.dat", "rb") as f:
+            egeinvalue = pickle.load(f)
+            data = np.array(pickle.load(f))  # (seqlen, modes)
+            data = data[:nbr_snaps, modes]
+    else: # if file from 3D POD
+        data = np.loadtxt(file_name).reshape(305, 305, 3) # Time, Mode, an(t) 
+        data = data[modes, :nbr_snaps, index]
+        data = np.transpose(data)
     for i in range(len(modes)):
         data[:, i] -= np.mean(data[:, i]) # remove mean value
         data[:, i] /= np.max(np.abs(data[:, i])) # normalize
@@ -77,4 +84,17 @@ def GenerateData(tf=2*np.pi, n=1000, freq=[1]):
         data[:, i] /= np.max(np.abs(data[:, i])) # normalize
     return(data)
 
-data = np.loadtxt('Data/podcoeff_12a02')
+m = 1
+n = 10
+#data = ImportData(file_name='Data/coeff',  modes=range(m, m+n), nbr_snaps=300)
+data = GenerateData(n=300, freq=[1,1,1,1,2,1,2,2,6,7,10])
+
+# Matrix = np.zeros((n, n))
+# for i in range(n):
+#     for j in range(n):
+#         Matrix[i,j] = np.correlate(data[:,i], data[:, j])
+
+R = np.corrcoef(data.transpose())
+values, vectors = np.linalg.eig(R)
+#print(values)
+print(values[values>0.5])
