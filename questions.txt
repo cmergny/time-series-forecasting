@@ -1,12 +1,19 @@
 # construire lstm simple sans AE voir la diff --> 
-- pertinence du lstm bidirectionnel 
--regarder dans le cours s'il y a des infos sur la dimension
+# pertinence du lstm bidirectionnel -> pas vrmt de sense physique
+# regarder dans le cours s'il y a des infos sur la dimension
     redu de dimension non lineaire
     def une distance entre deux vecteurs (gaussienne)
 # tester une prediction avec seul point --> ca marche à peu près !
-- fonctionnement en detail des lstm AE
+# fonctionnement en detail des lstm AE
 - changer valid test par les modes plutot que seq len
 # changer modele class by a forward pass
 # Augmenter la taille des hidden layers m'a permit de mieux apprendre
 - try changing learning by pack of modes to a single model
 - making a real autoencoder ?
+
+- contact stéphane etudiant en thèse prediction de sprectre de fourier
+    au labo vendredi
+- contact alessandro
+- chercher plus de methodes de dim
+
+# when LSTM is called it's just a single cell repeated (seqlen) times.

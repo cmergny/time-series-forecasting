@@ -23,9 +23,10 @@ def ImportData(file_name='Data/coeff', modes=range(10), nbr_snaps=300, index=2):
         data = np.loadtxt(file_name).reshape(305, 305, 3) # Time, Mode, an(t) 
         data = data[modes, :nbr_snaps, index]
         data = np.transpose(data)
+    # Normalise
     for i in range(len(modes)):
-        data[:, i] -= np.mean(data[:, i]) # remove mean value
-        data[:, i] /= np.max(np.abs(data[:, i])) # normalize
+        data[:, i] -= np.mean(data[:, i])
+        data[:, i] /= np.max(np.abs(data[:, i])) 
     return(data)
 
 def Convert2Torch(*args, device):
@@ -84,17 +85,56 @@ def GenerateData(tf=2*np.pi, n=1000, freq=[1]):
         data[:, i] /= np.max(np.abs(data[:, i])) # normalize
     return(data)
 
+def PCA(data, thresh=0.1):
+    """
+    Return estimation of dataset intrasic dimension using
+    Principal Component Analysis
+    """
+    n = data.shape[1]
+    Matrix = np.zeros((n, n))
+    for i in range(n):
+        for j in range(n):
+            Matrix[i,j] = np.correlate(data[:,i], data[:, j])
+    R = np.corrcoef(data.transpose())
+    values, vectors = np.linalg.eig(R)
+    return(len(values[values>thresh]))
+
+def MaxLikelihood(data, k):
+    """
+    Return estimation of dataset intrasic dimension using
+    article: Elizaveta Levina, Peter J. Bickel
+    Maximum Likelihood Estimation of Intrinsic Dimension"""
+    n = data.shape[1]
+    Matrix = np.zeros((n, n))
+    for i in range(n):
+        for j in range(n):
+            # Eucl dist
+            Matrix[i,j] = np.linalg.norm(data[:, i]-data[:, j])
+    Matrix.sort() # sort by NN
+    # k is nbr of neirest neigbhors
+    mk = 0 # computed dimension
+    for x in range(n):
+        mkx = 0
+        for j in range(1, k): # to k-1  
+            mkx += np.log(Matrix[x, k]/Matrix[x, j])
+        mk +=  (1/(k-1)*mkx)**(-1)
+    mk = mk/n
+    return(mk)
+
+
+
 m = 1
-n = 10
-#data = ImportData(file_name='Data/coeff',  modes=range(m, m+n), nbr_snaps=300)
-data = GenerateData(n=300, freq=[1,1,1,1,2,1,2,2,6,7,10])
+n = 300
+data = ImportData(file_name='Data/coeff',  modes=range(m, m+n), nbr_snaps=300)
+#data = GenerateData(n=20, freq=[1,2,3,4,5,6,7])
 
-# Matrix = np.zeros((n, n))
-# for i in range(n):
-#     for j in range(n):
-#         Matrix[i,j] = np.correlate(data[:,i], data[:, j])
+mk = MaxLikelihood(data, k=10)
+print(mk)
+#d = PCA(data)
 
-R = np.corrcoef(data.transpose())
-values, vectors = np.linalg.eig(R)
-#print(values)
-print(values[values>0.5])
+
+
+
+
+
+

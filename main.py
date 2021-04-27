@@ -19,7 +19,7 @@ import plot_data as plotdata
 
 # Choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-m = 20
+m = 1
 bs = 4
 # Read and generate dataset
 data = setdata.ImportData(file_name='Data/podcoeff_095a05.dat',  modes=range(m, m+6), nbr_snaps=500)
@@ -41,15 +41,16 @@ loss = lstm.TrainModel(model, x_train, y_train, n_epochs=100, target_len=ow, bat
 plt.plot(np.log10(loss))
 
 # %% Valid Model
-mode = 3
+mode = 6
 batch = 0
-p_valid = lstm.Predict(model, x_valid[:, :bs, :], target_len=30)
-plotdata.PlotPredictions(x_valid, y_valid, p_valid, batch, mode)
+inlen = -0
+p_valid = lstm.Predict(model, x_valid[inlen:, :bs, :], target_len=30)
+plotdata.PlotPredictions(x_valid[inlen:,:,:], y_valid, p_valid, batch, mode)
 
 # %% Plot train
 mode = 4
 batch = 1
-p_train = lstm.Predict(model, x_train[:, :bs, :], target_len=33)
+p_train = lstm.Predict(model, x_train[:, :bs, :], target_len=30)
 plotdata.PlotPredictions(x_train, y_train, p_train, batch, mode)
 
 # %% Saving and loading model
