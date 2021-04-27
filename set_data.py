@@ -33,7 +33,7 @@ def Convert2Torch(*args, device):
     """Convert numpy array to torch tensor with device cpu or gpu."""
     return([torch.from_numpy(arg).float().to(device) for arg in args])
 
-def MakeDataset(Data, split=0.8, common=0.2):
+def SplitDataset(Data, split=0.8, common=0.2):
     """
     Splits dataset into training and testing sets.
     split [float] : 0 < split <1, pourcentage of data to go in training set
@@ -85,6 +85,21 @@ def GenerateData(tf=2*np.pi, n=1000, freq=[1]):
         data[:, i] /= np.max(np.abs(data[:, i])) # normalize
     return(data)
 
+def PrepareDataset(data, split=0.7, noise=None, in_out_stride=(100, 30, 10)):
+    """ Returns 4 torch tensors"""
+    # Split
+    data_train, data_test = SplitDataset(data, split=split)
+    # Generate Inputs and Targets
+    iw, ow, stride = in_out_stride # input window, output window, stride
+    x_train, y_train = WindowedDataset(data_train, iw, ow, stride, nbr_features=data_train.shape[1]) 
+    x_valid, y_valid = WindowedDataset(data_test, iw, ow, stride, nbr_features=data_test.shape[1])
+    # Noise
+    x_train = x_train + np.random.normal(0, 0.02, x_train.shape) if noise else x_train
+    # Convert tensor and set device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # train on cpu or gpu
+    return(Convert2Torch(x_train, y_train, x_valid, y_valid, device=device))
+
+
 def PCA(data, thresh=0.1):
     """
     Return estimation of dataset intrasic dimension using
@@ -123,18 +138,15 @@ def MaxLikelihood(data, k):
 
 
 
-m = 1
-n = 300
-data = ImportData(file_name='Data/coeff',  modes=range(m, m+n), nbr_snaps=300)
-#data = GenerateData(n=20, freq=[1,2,3,4,5,6,7])
+### MAIN
 
-mk = MaxLikelihood(data, k=10)
-print(mk)
-#d = PCA(data)
+if __name__ == '__main__':
+    m = 1
+    n = 300
+    data = ImportData(file_name='Data/coeff',  modes=range(m, m+n), nbr_snaps=300)
+    #data = GenerateData(n=20, freq=[1,2,3,4,5,6,7])
 
-
-
-
-
-
+    mk = MaxLikelihood(data, k=10)
+    print(mk)
+    #d = PCA(data)
 

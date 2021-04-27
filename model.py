@@ -126,7 +126,7 @@ class SimpleLSTM(nn.Module):
 ### FUNCTIONS
 
 def TrainModel(model, input_tensor, target_tensor, n_epochs, target_len,
-            batch_size, learning_rate, wd):
+            batch_size, lr, wd):
     """
     Train the LSTM Encoder-Decoder NN
     --------
@@ -135,14 +135,14 @@ def TrainModel(model, input_tensor, target_tensor, n_epochs, target_len,
     n_epochs [int] : nbr of epochs
     target_len [int] : nbr of values to predict
     batch_size [int] : nbr of samples per gradient update
-    learning_rate [float] : learning rate to update weights, lr >= 0
+    lr [float] : learning rate to update weights, lr >= 0
     --------
     losses: array of loss function for each epoch
     """
     # Loss and optimizer
     model.train()
     Losses = np.full(n_epochs, np.nan) # Init losses array with NaNs
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=wd)
+    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
     criterion = nn.MSELoss()
     #criterion = SoftDTW(use_cuda=True, gamma=0.1)
     nbr_batches = int(input_tensor.shape[1] / batch_size) # nbr of batch iterations

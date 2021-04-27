@@ -5,9 +5,9 @@ Created on Wed Mar 24 19:28:56 2021
 @author: Cyril
 """
 ### IMPORTS
-#%reload_ext autoreload
-#%autoreload 2
 
+%reload_ext autoreload
+%autoreload 2
 import torch
 import numpy as np
 import model as lstm
@@ -16,42 +16,24 @@ import set_data as setdata
 import plot_data as plotdata
 
 ### MAIN
-
-# Choose device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-m = 1
-bs = 4
 # Read and generate dataset
-data = setdata.ImportData(file_name='Data/podcoeff_095a05.dat',  modes=range(m, m+6), nbr_snaps=500)
-#data = setdata.GenerateData(tf=4*np.pi, n=500, freq=range(4,15))
-data_train, data_test = setdata.MakeDataset(data, split=0.7)
-# Generate Inputs and Targets
-iw, ow, stride = 100, 30, 10 # input window, output window, stride
-x_train, y_train = setdata.WindowedDataset(data_train, iw, ow, stride, nbr_features=data_train.shape[1]) 
-x_valid, y_valid = setdata.WindowedDataset(data_test, iw, ow, stride, nbr_features=data_test.shape[1])
-#x_train = x_train + np.random.normal(0, 0.02, x_train.shape)
-plt.plot(x_train[:, 0, 4])
-# Convert tensor and set device
-x_train, y_train, x_valid, y_valid = setdata.Convert2Torch(x_train, y_train, x_valid, y_valid, device=device)
+m = 1
+data = setdata.ImportData(file_name='Data/podcoeff_095a05.dat',  modes=range(m, m+6))
+x_train, y_train, x_valid, y_valid = setdata.PrepareDataset(data)
 
-# %% Defining and Training Model
-model = lstm.LSTM_EncoderDecoder(input_size=x_train.shape[2], hidden_size=50).to(device)
-#model = lstm.SimpleLSTM(input_size=x_train.shape[2], hidden_size=20).to(device)
-loss = lstm.TrainModel(model, x_train, y_train, n_epochs=100, target_len=ow, batch_size=bs, learning_rate=0.02, wd=1e-9)
+# %% Create and train model
+bs = 4
+model = lstm.LSTM_EncoderDecoder(input_size=x_train.shape[2], hidden_size=50).to(x_train.device)
+loss = lstm.TrainModel(model, x_train, y_train, n_epochs=100, target_len=ow, batch_size=bs, lr=0.02, wd=1e-9)
 plt.plot(np.log10(loss))
 
-# %% Valid Model
-mode = 6
-batch = 0
+# %% Predict&Plot on valid and train data
 inlen = -0
 p_valid = lstm.Predict(model, x_valid[inlen:, :bs, :], target_len=30)
-plotdata.PlotPredictions(x_valid[inlen:,:,:], y_valid, p_valid, batch, mode)
+plotdata.PlotPredictions(x_valid[inlen:], y_valid, p_valid, batch=0, mode=1)
 
-# %% Plot train
-mode = 4
-batch = 1
-p_train = lstm.Predict(model, x_train[:, :bs, :], target_len=30)
-plotdata.PlotPredictions(x_train, y_train, p_train, batch, mode)
+p_train = lstm.Predict(model, x_train[inlen:, :bs, :], target_len=30)
+plotdata.PlotPredictions(x_train[inlen:], y_train, p_train, batch=0, mode=5)
 
 # %% Saving and loading model
 path = 'SavedModels/' + input('model name:')
