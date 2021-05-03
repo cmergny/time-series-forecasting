@@ -89,40 +89,6 @@ class LSTM_EncoderDecoder(nn.Module):
             decoder_input = decoder_output.unsqueeze(0)
         return(outputs)
 
-### OTHER CLASS
-
-class SimpleLSTM(nn.Module):
-
-    def __init__(self, input_size, hidden_size, num_layers=1):
-        """ Initialising var and defining LSTM """
-        super().__init__()
-        self.input_size = input_size   # nbr of features in input X
-        self.hidden_size = hidden_size # size of the hidden state
-        self.num_layers = num_layers   # nbr of recurrent layers
-        # LSTM
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers) #initalize
-        self.linear = nn.Linear(hidden_size, input_size)
-                
-    def forward(self, input_batch, target_len=None):
-        """
-        input_batch: input of shape (seq_len, nbr in batch, input_size)
-        encoder_hidden_states: tuple (h, c) 
-                where h.shape = (nbr_layer*nbrdirect, batch_size, hidden_size)
-        --------
-        output: gives all the hidden states in the sequence (seqlen, batch_size, hidden_size)
-        hidden: gives the hidden state & cell state of the last elt of the seq
-        """
-        # ! arg target_len unused juste to be consistent
-        self.init_hidden(input_batch.shape[1], input_batch.device)
-        lstm_output, self.hidden_states = self.lstm(input_batch, self.hidden_states)
-        lstm_output = self.linear(lstm_output.squeeze(0))
-        return(lstm_output[-1].unsqueeze(0))
-    
-    def init_hidden(self, batch_size, device):
-        self.hidden_states = (torch.zeros(self.num_layers, batch_size, self.hidden_size).to(device),
-        torch.zeros(self.num_layers, batch_size, self.hidden_size).to(device))
-        return(self.hidden_states)
-
 ### FUNCTIONS
 
 def TrainModel(model, input_tensor, target_tensor, n_epochs, target_len,

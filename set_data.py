@@ -9,6 +9,7 @@ import torch
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def ImportData(file_name='Data/coeff', modes=range(10), nbr_snaps=300, index=2):
     """ Open and read coeff file
@@ -133,18 +134,46 @@ def MaxLikelihood(data, k):
     mk = mk/n
     return(mk)
 
+def AirQualityData(width=500):
+    """ import the air qualityfile """
+    data = np.zeros((width, 13-2))
+    df = pd.read_csv('Data/air_quality.csv', sep=';', index_col=False)
+    # import wanted columns
+    for j, column in enumerate(df.columns[2:13]):
+        ar = np.array(df[column][:width])
+        # convert str to float
+        for i, elt in enumerate(ar):
+            if type(elt) == str:
+                ar[i] = float(elt.replace(',', '.'))
+            ar[i] = 0 if ar[i] < -100 else ar[i]
+        # Normalise
+        data[:, j] = ar - np.mean(ar)
+        data[:, j] /= np.max(np.abs(data[:, j])) 
+    return(data)
 
 ### MAIN
 if __name__ == '__main__':
-    m = 50
-    n = 10
+    m = 1
+    n = 300
     data = ImportData(file_name="Data/coeff",  modes=range(m, m+n), nbr_snaps=300)
-    #data = GenerateData(L=1000, freq=range(1,100))
-    #values = PCA(data)
+
+    # values = PCA(data)
+
+
+    
 
     transforms = np.zeros(data.shape)
     for i in range(data.shape[1]):
         transforms[:, i] = np.abs(np.fft.fft(data[:, i]))
     transforms = transforms[:transforms.shape[0]//2, :]
-    plt.plot(transforms)
-    values = PCA(transforms)
+    #plt.plot(transforms)
+    #values = PCA(transforms)
+
+    ar =[]
+    for k in range(2, 200, 10):
+        mk = MaxLikelihood(transforms, k)
+        ar.append(mk)
+    plt.plot(ar)
+
+
+    
