@@ -18,8 +18,9 @@ import plot_data as plotdata
 ### MAIN
 # Read and generate dataset
 m = 1
+ow = 1
 data = setdata.ImportData(file_name='Data/podcoeff_095a05.dat',  modes=range(m, m+6))
-x_train, y_train, x_valid, y_valid = setdata.PrepareDataset(data)
+x_train, y_train, x_valid, y_valid = setdata.PrepareDataset(data, noise=None, in_out_stride=(100, ow, 10))
 
 # %% Create and train model
 bs = 4
@@ -29,10 +30,10 @@ plt.plot(np.log10(loss))
 
 # %% Predict&Plot on valid and train data
 inlen = -0
-p_valid = lstm.Predict(model, x_valid[inlen:, :bs, :], target_len=30)
+p_valid = lstm.Predict(model, x_valid[inlen:, :bs, :], target_len=ow)
 plotdata.PlotPredictions(x_valid[inlen:], y_valid, p_valid, batch=0, mode=1)
 
-p_train = lstm.Predict(model, x_train[inlen:, :bs, :], target_len=30)
+p_train = lstm.Predict(model, x_train[inlen:, :bs, :], target_len=ow)
 plotdata.PlotPredictions(x_train[inlen:], y_train, p_train, batch=0, mode=5)
 
 # %% Saving and loading model
