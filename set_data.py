@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 def ImportData(file_name='Data/coeff', modes=range(10), nbr_snaps=300, index=2):
     """ Open and read coeff file
         returns an array of length (# of modes, # of snapshots, 3)
-        Truncate and normalize """ 
+        Truncate and normalize """
     if file_name[-4:] == '.dat': 
         with open("Data/podcoeff_095a05.dat", "rb") as f:
             egeinvalue = pickle.load(f)
@@ -76,8 +76,8 @@ def WindowedDataset(Data, iw=5, ow=1, stride=1, nbr_features=1):
             
     return X, Y
 
-def GenerateData(tf=2*np.pi, n=1000, freq=[1]):
-    t = np.linspace(0., tf, n)
+def GenerateData(tf=2*np.pi, L=1000, freq=[1]):
+    t = np.linspace(0., tf, L)
     data = np.zeros((t.size, len(freq)))
     for i, f in enumerate(freq):
         data[:, i] = np.cos(f*t)
@@ -100,19 +100,16 @@ def PrepareDataset(data, split=0.7, noise=None, in_out_stride=(100, 30, 10)):
     return(Convert2Torch(x_train, y_train, x_valid, y_valid, device=device))
 
 
-def PCA(data, thresh=0.1):
+def PCA(data, thresh=0.5):
     """
     Return estimation of dataset intrasic dimension using
     Principal Component Analysis
     """
-    n = data.shape[1]
-    Matrix = np.zeros((n, n))
-    for i in range(n):
-        for j in range(n):
-            Matrix[i,j] = np.correlate(data[:,i], data[:, j])
     R = np.corrcoef(data.transpose())
     values, vectors = np.linalg.eig(R)
-    return(len(values[values>thresh]))
+    #values = values/np.max(values)
+    print('id = ', len(values[values>thresh]))
+    return(values)
 
 def MaxLikelihood(data, k):
     """
@@ -137,16 +134,17 @@ def MaxLikelihood(data, k):
     return(mk)
 
 
-
 ### MAIN
-
 if __name__ == '__main__':
-    m = 1
-    n = 300
-    data = ImportData(file_name='Data/coeff',  modes=range(m, m+n), nbr_snaps=300)
-    #data = GenerateData(n=20, freq=[1,2,3,4,5,6,7])
+    m = 50
+    n = 10
+    data = ImportData(file_name="Data/coeff",  modes=range(m, m+n), nbr_snaps=300)
+    #data = GenerateData(L=1000, freq=range(1,100))
+    #values = PCA(data)
 
-    mk = MaxLikelihood(data, k=10)
-    print(mk)
-    #d = PCA(data)
-
+    transforms = np.zeros(data.shape)
+    for i in range(data.shape[1]):
+        transforms[:, i] = np.abs(np.fft.fft(data[:, i]))
+    transforms = transforms[:transforms.shape[0]//2, :]
+    plt.plot(transforms)
+    values = PCA(transforms)
