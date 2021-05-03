@@ -11,8 +11,10 @@ def PlotPredictions(X, Y, P, batch, mode, title='', name=''):
     target_len = P.shape[0]
     figure, ax = plt.subplots()
     ax.plot(range(len_x), X[:, batch, mode], label='Data')
-    ax.plot(range(len_x, len_x+ow), Y[:, batch, mode], color='green',label='target')
-    ax.plot(range(len_x, len_x+target_len), P[:, batch, mode], color='orange', label='predictions')
+    ax.plot(range(len_x, len_x+ow), Y[:, batch, mode], color='green')
+    ax.plot(range(len_x, len_x+ow), Y[:, batch, mode],'x', color='green',label='target')
+    ax.plot(range(len_x, len_x+target_len), P[:, batch, mode], color='orange')
+    ax.plot(range(len_x, len_x+target_len), P[:, batch, mode], 'x', color='orange', label='predictions')
     ax.set_ylabel('coeff')
     ax.set_xlabel('timesteps')
     plt.title(title)
