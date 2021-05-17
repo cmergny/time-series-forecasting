@@ -3,17 +3,28 @@
 # regarder dans le cours s'il y a des infos sur la dimension
     redu de dimension non lineaire
     def une distance entre deux vecteurs (gaussienne)
-# tester une prediction avec seul point --> ca marche à peu près !
 # fonctionnement en detail des lstm AE
 - changer valid test par les modes plutot que seq len
-# changer modele class by a forward pass
+# changer modele class by a forward pass (arima?)
 # Augmenter la taille des hidden layers m'a permit de mieux apprendre
 - try changing learning by pack of modes to a single model
 - making a real autoencoder ?
 
-- contact stéphane etudiant en thèse prediction de sprectre de fourier
-    au labo vendredi
-- contact alessandro
-- chercher plus de methodes de dim
+- utiliser des modeles autoregressifs 
+- forecasting principle and practice
+- cours de laurent oudre: sinusoidal model
+- lstm pas assez de données
+- des qu'on peut utilsier des modles de base le faire
+- tester avec l'overlap quantifier a quel point c meilleur, voir avec ou sans, 1 mode par 1 mode
+- faire une autocoreellation pour regarder quelle periode va joeur (un peu comme fourier)
+- cours 3 oudre
+- transfer learning generer jeux de donnée sinus avec amplitudes et frequences différentes
+- 100 000 données
+- voir s'il arrive a overfit sur ça
+- puis entrainer sur les données
+- trouver le juste miluieu des hidden states size
+- data driven modelling: theory guided data
+- GRU ?
 
-# when LSTM is called it's just a single cell repeated (seqlen) times.
+# modele LSTM marche sur les données coeffs pour les grands modres si on les entraine par 10 voir par 1 mode a la fois
+

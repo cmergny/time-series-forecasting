@@ -24,11 +24,7 @@ def ImportData(file_name='Data/coeff', modes=range(10), nbr_snaps=300, index=2):
         data = np.loadtxt(file_name).reshape(305, 305, 3) # Time, Mode, an(t) 
         data = data[modes, :nbr_snaps, index]
         data = np.transpose(data)
-    # Normalise
-    for i in range(len(modes)):
-        data[:, i] -= np.mean(data[:, i])
-        data[:, i] /= np.max(np.abs(data[:, i])) 
-    return(data)
+    return(Normalise(data))
 
 def Convert2Torch(*args, device):
     """Convert numpy array to torch tensor with device cpu or gpu."""
@@ -77,14 +73,6 @@ def WindowedDataset(Data, iw=5, ow=1, stride=1, nbr_features=1):
             
     return X, Y
 
-def GenerateData(tf=2*np.pi, L=1000, freq=[1]):
-    t = np.linspace(0., tf, L)
-    data = np.zeros((t.size, len(freq)))
-    for i, f in enumerate(freq):
-        data[:, i] = np.cos(f*t)
-        data[:, i] -= np.mean(data[:, i]) # remove mean value
-        data[:, i] /= np.max(np.abs(data[:, i])) # normalize
-    return(data)
 
 def PrepareDataset(data, split=0.7, noise=None, in_out_stride=(100, 30, 10)):
     """ Returns 4 torch tensors"""
@@ -96,10 +84,18 @@ def PrepareDataset(data, split=0.7, noise=None, in_out_stride=(100, 30, 10)):
     x_valid, y_valid = WindowedDataset(data_test, iw, ow, stride, nbr_features=data_test.shape[1])
     # Noise
     x_train = x_train + np.random.normal(0, 0.02, x_train.shape) if noise else x_train
+    # reshape
+    x_train = Reshaping(x_train)
+    y_train = Reshaping(y_train)
+    x_valid = Reshaping(x_valid)
+    y_valid = Reshaping(y_valid)
     # Convert tensor and set device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # train on cpu or gpu
     return(Convert2Torch(x_train, y_train, x_valid, y_valid, device=device))
 
+def Reshaping(x):
+    x = x.reshape(-1, x.shape[1]*x.shape[2], 1)
+    return(x)
 
 def PCA(data, thresh=0.5):
     """
@@ -134,6 +130,12 @@ def MaxLikelihood(data, k):
     mk = mk/n
     return(mk)
 
+def Normalise(data):
+    for i in range(data.shape[1]):
+        data[:, i] -= np.mean(data[:, i]) # remove mean value
+        data[:, i] /= np.max(np.abs(data[:, i])) # normalize
+    return(data)
+
 def AirQualityData(width=500):
     """ import the air qualityfile """
     data = np.zeros((width, 13-2))
@@ -146,34 +148,36 @@ def AirQualityData(width=500):
             if type(elt) == str:
                 ar[i] = float(elt.replace(',', '.'))
             ar[i] = 0 if ar[i] < -100 else ar[i]
-        # Normalise
-        data[:, j] = ar - np.mean(ar)
-        data[:, j] /= np.max(np.abs(data[:, j])) 
-    return(data)
+    return(Normalise(data))
+
+def GenerateData(tf=2*np.pi, L=4000, nbr_samples=500):
+    t = np.linspace(0., tf, L)
+    data = np.zeros((t.size, nbr_samples))
+    # Amplitude modulation
+    for i in range(nbr_samples):
+        f = float(i*0.01 +1)
+        f_m = f/2
+        A = 1
+        B = 0.4
+        ct = A*np.cos(2*np.pi*f*t)
+        mt = B*np.cos(2*np.pi*f_m*t + np.random.rand())
+        data[:, i] = (1+mt/A)*ct
+    # Return Nomalised dataset
+    return(Normalise(data))
 
 ### MAIN
 if __name__ == '__main__':
-    m = 1
-    n = 300
+    m = 0
+    n = 10
     data = ImportData(file_name="Data/coeff",  modes=range(m, m+n), nbr_snaps=300)
 
     # values = PCA(data)
-
-
-    
 
     transforms = np.zeros(data.shape)
     for i in range(data.shape[1]):
         transforms[:, i] = np.abs(np.fft.fft(data[:, i]))
     transforms = transforms[:transforms.shape[0]//2, :]
-    #plt.plot(transforms)
-    #values = PCA(transforms)
-
-    ar =[]
-    for k in range(2, 200, 10):
-        mk = MaxLikelihood(transforms, k)
-        ar.append(mk)
-    plt.plot(ar)
-
-
+    plt.plot(transforms)
+    values = PCA(transforms)
     
+    #data = GenerateData()

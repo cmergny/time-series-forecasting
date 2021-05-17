@@ -10,7 +10,7 @@ Created on Wed Mar 24 16:37:09 2021
 import numpy as np
 from tqdm import trange
 from soft_dtw_cuda import SoftDTW
-
+from torch.utils.tensorboard import SummaryWriter
 import torch
 import torch.nn as nn
 from torch import optim
@@ -91,7 +91,7 @@ class LSTM_EncoderDecoder(nn.Module):
 
 ### FUNCTIONS
 
-def TrainModel(model, input_tensor, target_tensor, n_epochs, target_len,
+def TrainModel(model, input_tensor, target_tensor, x_valid, y_valid, n_epochs, target_len,
             batch_size, lr, wd):
     """
     Train the LSTM Encoder-Decoder NN
@@ -106,7 +106,7 @@ def TrainModel(model, input_tensor, target_tensor, n_epochs, target_len,
     losses: array of loss function for each epoch
     """
     # Loss and optimizer
-    model.train()
+    writer = SummaryWriter()
     Losses = np.full(n_epochs, np.nan) # Init losses array with NaNs
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
     criterion = nn.MSELoss()
@@ -115,6 +115,8 @@ def TrainModel(model, input_tensor, target_tensor, n_epochs, target_len,
     # Iterate by epochs
     with trange(n_epochs) as tr:
         for ep in tr:
+            # training loop
+            model.train()
             batch_loss = 0
             # Iterate by batch
             for b in range(nbr_batches):
@@ -133,8 +135,26 @@ def TrainModel(model, input_tensor, target_tensor, n_epochs, target_len,
                 optimizer.step()
             # Computing Loss FOR epoch
             batch_loss /= nbr_batches 
+            writer.add_scalar("Train_Loss", batch_loss, ep)
             Losses[ep] = batch_loss
-            tr.set_postfix(loss = "{0:.2e}".format(batch_loss))         
+
+            # evaluation loop
+            model.eval()
+            with torch.no_grad():
+                valid_loss = 0
+                nbr_batches_valid = int(x_valid.shape[1]/batch_size) 
+                for b in range(nbr_batches_valid):
+                    input_batch = x_valid[:, b:b+batch_size, :]
+                    target_batch = y_valid[:, b:b+batch_size :]
+                    outputs = model(input_batch, target_len)
+                    loss = criterion(outputs, target_batch)
+                    valid_loss += loss
+                valid_loss = valid_loss/nbr_batches_valid
+                writer.add_scalar("Valid_Loss", valid_loss, ep)
+            model.train()
+
+            tr.set_postfix(train="{0:.2e}".format(batch_loss), valid="{0:.2e}".format(valid_loss)) 
+    writer.flush()        
     return(Losses)
                     
 
