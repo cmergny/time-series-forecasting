@@ -9,7 +9,7 @@ Created on Wed Mar 24 16:37:09 2021
 
 import numpy as np
 from tqdm import trange
-from soft_dtw_cuda import SoftDTW
+#from soft_dtw_cuda import SoftDTW
 from torch.utils.tensorboard import SummaryWriter
 import torch
 import torch.nn as nn
