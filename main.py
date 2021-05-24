@@ -6,8 +6,8 @@ Created on Wed Mar 24 19:28:56 2021
 """
 ### IMPORTS
 
-%reload_ext autoreload
-%autoreload 2
+#%reload_ext autoreload
+#%autoreload 2
 import torch
 import numpy as np
 import model as lstm
