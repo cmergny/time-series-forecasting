@@ -6,8 +6,8 @@ Created on Wed Mar 24 19:28:56 2021
 """
 ### IMPORTS
 
-#%reload_ext autoreload
-#%autoreload 2
+%reload_ext autoreload
+%autoreload 2
 import torch
 import numpy as np
 import model as lstm
@@ -17,11 +17,10 @@ import plot_data as plotdata
 
 ### MAIN
 # Read and generate dataset
-m = 30
+m = 1
 ow = 20
-data = setdata.ImportData(file_name='Data/coeff',  modes=range(m, m+10))
+data = setdata.ImportData(file_name='Data/podresults_ch180.pickle',  modes=range(m, m+100))
 #data = setdata.GenerateData(L=300, nbr_samples=300)
-# overlap ?
 #data = setdata.AirQualityData(width=2000)
 x_train, y_train, x_valid, y_valid = setdata.PrepareDataset(data, noise=None, in_out_stride=(80, ow, 30))
 plt.plot(x_train.to('cpu').detach()[:,0,0])
