@@ -40,3 +40,11 @@ canal plan problème c'est que max d'energie dans le sgrandes echelles, donc si 
 # utiliser utilitaire POD python
 # contacter à partir du lundi 31, 
 se voir à partir du mardi 1er juin, bloquer un creneau
+
+
+
+#POD 
+
+nt = 100 snapshots
+x = millions
+multivariate transformers
