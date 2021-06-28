@@ -1,5 +1,5 @@
-older/
 __pycache__/
-runs/
-figures/
-data/
+runs/*
+figures/*
+data/*.pickle
+data/*.d
