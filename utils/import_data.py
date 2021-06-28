@@ -28,7 +28,7 @@ class Data:
             self.file_name = file_name
             self.modes = modes
             self.data = self.ImportData(file_name, modes, nbr_snaps)
-        self.Quantization(round=1)
+        self.Quantization(round=10)
         
     ### INITIALASING THE DATA
     
@@ -149,10 +149,11 @@ class Data:
         return(x, y)
     
     def __repr__(self) -> str:
-        text = f'x_train : {mydata.x_train.shape}\n'
-        text += f'y_train : {mydata.y_train.shape}\n'
-        text += f'x_valid : {mydata.x_valid.shape}\n'
-        text += f'y_valid : {mydata.y_valid.shape}\n'
+        text =  f'device : {self.device}\n'
+        text += f'x_train : {self.x_train.shape}\n'
+        text += f'y_train : {self.y_train.shape}\n'
+        text += f'x_valid : {self.x_valid.shape}\n'
+        text += f'y_valid : {self.y_valid.shape}\n'
         return(text)
         
            

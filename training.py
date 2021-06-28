@@ -1,68 +1,77 @@
-
-#from torch.utils.tensorboard import SummaryWriter
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from torch import optim
 from tqdm import trange
 
-def TrainModel(model, input_tensor, target_tensor, x_valid, y_valid, n_epochs, 
-               batch_size, lr, wd):
 
-    # Loss and optimizer
-    #writer = SummaryWriter()
-    ow = 20
-    Losses = np.full(n_epochs, np.nan) # Init losses array with NaNs
-    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
-    criterion = nn.MSELoss()
-    nbr_batches = int(input_tensor.shape[1] / batch_size) # nbr of batch iterations
-    # Iterate by epochs
-    with trange(n_epochs) as tr:
-        for ep in tr:
-            # training loop
-            model.train()
-            batch_loss = 0
-            # Iterate by batch
-            for b in range(nbr_batches):
-                # Select batches
-                input_batch = input_tensor[:, b:b+batch_size, :]
-                target_batch = target_tensor[:, b:b+batch_size, :]
-                # Initialise gradient to zero
-                optimizer.zero_grad()
-                # Calling model
-                #outputs = model(input_batch[:-1], input_batch[-2:])
-                outputs = model(input_batch, target_len=ow)
-                # Computing loss
-                loss = criterion(outputs, target_batch)
-                batch_loss += loss
-                # Backpropagating 
-                loss.backward()
-                optimizer.step()
-            # Computing Loss FOR epoch
-            batch_loss /= nbr_batches 
-            #writer.add_scalar("Train_Loss", batch_loss, ep)
-            Losses[ep] = batch_loss
-
-            # evaluation loop
-            model.eval()
-            with torch.no_grad():
-                valid_loss = 0
-                nbr_batches_valid = int(x_valid.shape[1]/batch_size) 
-                for b in range(nbr_batches_valid):
-                    input_batch = x_valid[:, b:b+batch_size, :]
-                    target_batch = y_valid[:, b:b+batch_size :]
-                    #outputs = model(input_batch[:-1], input_batch[-2:])
-                    outputs = model(input_batch, target_len=ow)
-                    loss = criterion(outputs, target_batch)
-                    valid_loss += loss
-                valid_loss = valid_loss/nbr_batches_valid
-                #writer.add_scalar("Valid_Loss", valid_loss, ep)
-            model.train()
-
-            tr.set_postfix(train="{0:.2e}".format(batch_loss), valid="{0:.2e}".format(valid_loss)) 
-    #writer.flush()        
-    return(Losses)
-
+class Trainer():
+    
+    def __init__(self, model, mydata) -> None:
+        self.model = model
+        self.data = mydata
+        
+    def step(self, input_tensor, target_tensor, n_batches, training=False):
+        """ Per batch training step"""
+        batch_loss = 0
+        # Iterate by batch
+        for b in range(n_batches):
+            # Init grad during train
+            if training:
+                self.optimizer.zero_grad()
+            # Select batch
+            input_batch = input_tensor[:, b:b+self.bs, :]
+            target_batch = target_tensor[:, b:b+self.bs, :]
+            # Calling model
+            outputs = self.model(input_batch, target_len=self.data.ow)
+            loss = self.criterion(outputs, target_batch)
+            batch_loss += loss
+            # Backpropagating 
+            if training: 
+                    loss.backward()
+                    self.optimizer.step()
+        return(batch_loss/n_batches)
+        
+    def train(self, epochs, bs, lr):
+        
+        self.bs = bs
+        self.test_loss = np.full(epochs, np.nan) 
+        self.valid_loss = np.full(epochs, np.nan) 
+        self.optimizer = optim.Adam(self.model.parameters(), lr=lr, weight_decay=1e-7)
+        self.criterion = nn.MSELoss()
+        
+        n_batches_test = int(self.data.x_train.shape[1]/bs) 
+        n_batches_valid = int(self.data.x_valid.shape[1]/bs) 
+        
+        with trange(epochs) as tr:
+            for ep in tr:
+                # training loop
+                self.model.train()
+                self.test_loss[ep] = self.step(self.data.x_train, self.data.y_train, n_batches_test, training=True) 
+                    
+                # evaluation loop
+                self.model.eval()
+                with torch.no_grad():
+                    self.valid_loss[ep] = self.step(self.data.x_valid, self.data.y_valid, n_batches_valid)
+                                    
+                # Print on progress bar
+                tr.set_postfix(train="{0:.2e}".format(self.test_loss[ep]), valid="{0:.2e}".format(self.valid_loss[ep])) 
+        return(self.test_loss, self.valid_loss)
+        
+        
+    def __repr__(self) -> str:
+        fig, ax = plt.subplots()
+        ax.plot(np.log10(self.test_loss), label='Training set')
+        ax.plot(np.log10(self.valid_loss), label='Validation set')
+        ax.set_xlabel('epochs')
+        ax.set_ylabel('loss')
+        plt.plot()
+        return('\n device = '+torch.cuda.get_device_name(self.data.device))
+        
+    
+    
+    
     
 def Inference(model, input_batch, ow=20):
     """ Predicitons for a transformer """
