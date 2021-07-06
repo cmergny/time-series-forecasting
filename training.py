@@ -72,7 +72,6 @@ class Trainer():
     
     
     
-    
 def Inference(model, input_batch, ow=20):
     """ Predicitons for a transformer """
     model.eval() 

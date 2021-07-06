@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 class Data:
     
-    def __init__(self, modes=range(10), nbr_snaps=-1, file_name=None) -> None:
+    def __init__(self, modes, nbr_snaps=-1, file_name=None) -> None:
         
         self.x_train, self.y_train = [], []
         self.x_valid, self.y_valid = [], []
@@ -28,7 +28,7 @@ class Data:
             self.file_name = file_name
             self.modes = modes
             self.data = self.ImportData(file_name, modes, nbr_snaps)
-        self.Quantization(round=10)
+        self.Quantization(round=1)
         
     ### INITIALASING THE DATA
     
@@ -38,11 +38,11 @@ class Data:
         if file_name[-4:] == ".dat":
             with open("Data/podcoeff_095a05.dat", "rb") as f:
                 egeinvalue = pickle.load(f)
-                data = np.array(pickle.load(f))  
+                data = np.array(pickle.load(f))      
         elif file_name[-7:] == ".pickle":
             with open(file_name, "rb") as handle:
                 eigd, eigvec, meanfield, x, y, z = pickle.load(handle)
-                data = np.array(eigvec)   
+                data = np.array(eigvec)
         # Pod from Yann
         elif file_name[-2:] == ".d":
             data = np.loadtxt(file_name)[:, 1:]
@@ -51,7 +51,9 @@ class Data:
             data = np.loadtxt(file_name).reshape(305, 305, 3)  # Time, Mode, an(t)
             data = data[:, :, 2]
             data = np.transpose(data)
+            
         # Truncate and Normalise
+        data = data[:nbr_snaps, modes]
         print(f'Imported {file_name}')
         return(self.Normalise(data))
     
