@@ -40,7 +40,7 @@ class Trainer():
         self.test_loss = np.full(epochs, np.nan) 
         self.valid_loss = np.full(epochs, np.nan) 
         self.optimizer = optim.Adam(self.model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9)
-        self.optimizer = NoamOpt(d_model=512, warmup=8000, optimizer=self.optimizer)
+        self.optimizer = NoamOpt(d_model=612, warmup=9000, optimizer=self.optimizer)
         self.criterion = nn.MSELoss()
         
         n_batches_test = int(self.data.x_train.shape[1]/bs) 
@@ -123,5 +123,5 @@ class NoamOpt:
         "Implement `lrate` above"
         if step is None:
             step = self._step
-        return self.d_model**(-0.5)*min(step**(-0.5), step*self.warmup**(-1.5))
+        return 5e-5 + self.d_model**(-0.5)*min(step**(-0.5), step*self.warmup**(-1.5))
         
