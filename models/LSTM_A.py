@@ -74,6 +74,7 @@ class Attention(nn.Module):
         self.softmax = nn.Softmax(dim=0)
         
     def forward(self, out_e, hidden_d):
+        """S, N, H the Source length, Batch size and Hidden size"""
         # out_e.shape = (S, N, H)
         hidden_d = hidden_d.repeat(out_e.shape[0], 1, 1) 
         # hidden_d.shape = (1, N, H) -> (S, N, H)

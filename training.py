@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from torch import optim
+from torch.optim import optimizer
 from tqdm import trange
 
 
@@ -19,7 +20,7 @@ class Trainer():
         for b in range(n_batches):
             # Init grad during train
             if training:
-                self.optimizer.zero_grad()
+                self.optimizer.optimizer.zero_grad()
             # Select batch
             input_batch = input_tensor[:, b:b+self.bs, :]
             target_batch = target_tensor[:, b:b+self.bs, :]
@@ -38,7 +39,8 @@ class Trainer():
         self.bs = bs
         self.test_loss = np.full(epochs, np.nan) 
         self.valid_loss = np.full(epochs, np.nan) 
-        self.optimizer = optim.Adam(self.model.parameters(), lr=lr, weight_decay=1e-7)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9)
+        self.optimizer = NoamOpt(d_model=512, warmup=8000, optimizer=self.optimizer)
         self.criterion = nn.MSELoss()
         
         n_batches_test = int(self.data.x_train.shape[1]/bs) 
@@ -56,10 +58,12 @@ class Trainer():
                     self.valid_loss[ep] = self.step(self.data.x_valid, self.data.y_valid, n_batches_valid)
                                     
                 # Print on progress bar
-                tr.set_postfix(train="{0:.2e}".format(self.test_loss[ep]), valid="{0:.2e}".format(self.valid_loss[ep])) 
+                tr.set_postfix(train="{0:.2e}".format(self.test_loss[ep]),
+                               valid="{0:.2e}".format(self.valid_loss[ep]),
+                               lr="{0:.2e}".format(self.optimizer._rate)) 
         return(self.test_loss, self.valid_loss)
         
-        
+    
     def __repr__(self) -> str:
         fig, ax = plt.subplots()
         ax.plot(np.log10(self.test_loss), label='Training set')
@@ -94,3 +98,30 @@ def Predict(model, **kwargs):
     with torch.no_grad():
         outputs = model(**kwargs)
         return(outputs.cpu().detach())
+    
+    
+class NoamOpt:
+    "Optim wrapper that implements rate."
+    def __init__(self, d_model, warmup, optimizer):
+        self.optimizer = optimizer
+        self._step = 0
+        self.warmup = warmup
+        self.factor = 1
+        self.d_model = d_model
+        self._rate = 0
+        
+    def step(self):
+        "Update parameters and rate"
+        self._step += 1
+        rate = self.rate()
+        for p in self.optimizer.param_groups:
+            p['lr'] = rate
+        self._rate = rate
+        self.optimizer.step()
+        
+    def rate(self, step = None):
+        "Implement `lrate` above"
+        if step is None:
+            step = self._step
+        return self.d_model**(-0.5)*min(step**(-0.5), step*self.warmup**(-1.5))
+        
