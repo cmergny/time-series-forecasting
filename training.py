@@ -20,7 +20,7 @@ class Trainer():
         for b in range(n_batches):
             # Init grad during train
             if training:
-                self.optimizer.optimizer.zero_grad()
+                self.optimizer.zero_grad()
             # Select batch
             input_batch = input_tensor[:, b:b+self.bs, :]
             target_batch = target_tensor[:, b:b+self.bs, :]
@@ -39,8 +39,8 @@ class Trainer():
         self.bs = bs
         self.test_loss = np.full(epochs, np.nan) 
         self.valid_loss = np.full(epochs, np.nan) 
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9)
-        self.optimizer = NoamOpt(d_model=612, warmup=9000, optimizer=self.optimizer)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9)
+        #self.optimizer = NoamOpt(d_model=1e4, warmup=200, optimizer=self.optimizer)
         self.criterion = nn.MSELoss()
         
         n_batches_test = int(self.data.x_train.shape[1]/bs) 
@@ -59,11 +59,10 @@ class Trainer():
                                     
                 # Print on progress bar
                 tr.set_postfix(train="{0:.2e}".format(self.test_loss[ep]),
-                               valid="{0:.2e}".format(self.valid_loss[ep]),
-                               lr="{0:.2e}".format(self.optimizer._rate)) 
+                               valid="{0:.2e}".format(self.valid_loss[ep]))
+                               #lr="{0:.2e}".format(self.optimizer._rate)) 
         return(self.test_loss, self.valid_loss)
         
-    
     def __repr__(self) -> str:
         fig, ax = plt.subplots()
         ax.plot(np.log10(self.test_loss), label='Training set')
@@ -73,35 +72,15 @@ class Trainer():
         plt.plot()
         return('\n device = '+torch.cuda.get_device_name(self.data.device))
         
-    
-    
-    
-def Inference(model, input_batch, ow=20):
-    """ Predicitons for a transformer """
-    model.eval() 
-    predictions = torch.zeros(ow, input_batch.shape[1], input_batch.shape[2]).to(input_batch.device)
-    outputs = input_batch[0, :, :].unsqueeze(0)
-    predictions[0] = outputs
-    # Autoregressive
-    for i in range(ow):
+    def predict(self, **kwargs):
+        self.model.eval()
         with torch.no_grad():
-            pred_batch = model(input_batch, outputs)
-        # Append last prediction
-        predictions[1:i+1, :, :] = pred_batch
-        outputs = predictions[:i+1, :, :]
-    # return all but first element
-    return(predictions.detach().to('cpu')[1:])
-    
-    
-def Predict(model, **kwargs):
-    model.eval()
-    with torch.no_grad():
-        outputs = model(**kwargs)
-        return(outputs.cpu().detach())
-    
+            outputs = self.model(**kwargs)
+            return(outputs.cpu().detach())    
     
 class NoamOpt:
-    "Optim wrapper that implements rate."
+    """Optimizer wrapper that implements adaptative rate
+    as in Attention is all you need Paper"""
     def __init__(self, d_model, warmup, optimizer):
         self.optimizer = optimizer
         self._step = 0
@@ -123,5 +102,23 @@ class NoamOpt:
         "Implement `lrate` above"
         if step is None:
             step = self._step
-        return 5e-5 + self.d_model**(-0.5)*min(step**(-0.5), step*self.warmup**(-1.5))
-        
+        return  self.d_model**(-0.5)*min(step**(-0.5), step*self.warmup**(-1.5))
+
+
+
+### MAIN
+
+if __name__ == '__main__':
+
+    epochs = 500
+    d_model = 1
+    warmup = 20
+    opt = NoamOpt(d_model, warmup, None)
+    lr =  [opt.rate(i)  for i in range(1, epochs)]
+    print('{0:.2e}'.format(max(lr)))
+    
+    fig, ax = plt.subplots()
+    ax.plot(np.arange(1, epochs), lr)
+    ax.set_yscale('log')
+    plt.show()
+    

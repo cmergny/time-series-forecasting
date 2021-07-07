@@ -115,3 +115,10 @@ class LSTM_Attention(nn.Module):
             outputs[t] = out_d
             input_d = out_d.unsqueeze(0)
         return(outputs)
+    
+    def save(self, modelname='last_model'):
+        "Saves model to the saved_models folder"
+        path = f'saved_models/{modelname}'
+        torch.save(self.state_dict(), path)
+        print(f'Saved model to {path}')
+        return None

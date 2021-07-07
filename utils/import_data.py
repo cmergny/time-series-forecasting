@@ -107,7 +107,7 @@ class Data:
         x_valid = Reshaping(x_valid)
         y_valid = Reshaping(y_valid)
         # Convert tensor and set device
-        self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")  # train on cpu or gpu
+        self.device = device if device is not None else torch.device("cuda")  # train on cpu or gpu
         self.x_train, self.y_train, self.x_valid, self.y_valid =  Convert2Torch(x_train, y_train, x_valid, y_valid, device=self.device)
         self.train_ds = CustomDataset(self.x_train, self.y_train)
         self.valid_ds = CustomDataset(self.x_valid, self.y_valid)
@@ -156,10 +156,14 @@ class Data:
         text += f'y_train : {self.y_train.shape}\n'
         text += f'x_valid : {self.x_valid.shape}\n'
         text += f'y_valid : {self.y_valid.shape}\n'
+        
+        plt.plot(self.x_train[:, 0, 0].to('cpu').detach())
+        plt.plot(self.x_train[:, -1, 0].to('cpu').detach())
         return(text)
         
            
 class CustomDataset(Dataset):
+    "Used in the data class"
     def __init__(self, x, y) -> None:
         self.x = x # (S, N, E)
         self.y = y # (T, N, E)
