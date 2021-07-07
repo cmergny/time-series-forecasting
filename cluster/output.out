@@ -8,3 +8,4 @@ y_valid : torch.Size([20, 50, 1])
 
 
  device = Tesla K80
+Saved model to saved_models/check

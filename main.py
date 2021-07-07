@@ -8,9 +8,9 @@ import utils.plot_data as plot_data
 import torch
 import training
 
-%reload_ext autoreload
-%autoreload 2
-%matplotlib inline
+#%reload_ext autoreload
+#%autoreload 2
+#%matplotlib inline
 
 # %% Prepare Data
 mydata = import_data.Data(file_name='data/coeff', modes=range(100, 150))
@@ -23,7 +23,7 @@ trainer = training.Trainer(model, mydata)
 bs = 16
 
 #%% Define and train model
-epochs = 50
+epochs = 20
 test_loss, valid_loss = trainer.train(epochs=epochs, bs=bs, lr=8e-4)
 print(trainer)
 #plt.savefig('cluster/loss.png')
@@ -35,6 +35,6 @@ input_batch = mydata.x_valid[:, batch:batch+bs, :]
 target_batch = mydata.y_valid[:, batch:batch+bs, :] 
 p_valid = trainer.predict(x=input_batch, target_len=20)
 plot_data.PlotPredictions(input_batch, target_batch, p_valid, batch=8, mode=0)
-model.save('Check')
+model.save('saved_models/check')
 # %%
 #model.load_state_dict(torch.load('saved_models/lol'))
