@@ -20,7 +20,7 @@ class Trainer():
         for b in range(n_batches):
             # Init grad during train
             if training:
-                self.optimizer.zero_grad()
+                self.optimizer.optimizer.zero_grad()
             # Select batch
             input_batch = input_tensor[:, b:b+self.bs, :]
             target_batch = target_tensor[:, b:b+self.bs, :]
@@ -39,8 +39,9 @@ class Trainer():
         self.bs = bs
         self.test_loss = np.full(epochs, np.nan) 
         self.valid_loss = np.full(epochs, np.nan) 
+        self.best_loss = 1e10
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9)
-        #self.optimizer = NoamOpt(d_model=1e4, warmup=200, optimizer=self.optimizer)
+        self.optimizer = NoamOpt(d_model=5e5, warmup=2000, optimizer=self.optimizer)
         self.criterion = nn.MSELoss()
         
         n_batches_test = int(self.data.x_train.shape[1]/bs) 
@@ -51,16 +52,20 @@ class Trainer():
                 # training loop
                 self.model.train()
                 self.test_loss[ep] = self.step(self.data.x_train, self.data.y_train, n_batches_test, training=True) 
-                    
                 # evaluation loop
                 self.model.eval()
                 with torch.no_grad():
                     self.valid_loss[ep] = self.step(self.data.x_valid, self.data.y_valid, n_batches_valid)
-                                    
+                # Every 10 ep check if valid loss is the best 
+                if self.valid_loss[ep] < self.best_loss and ep%10==0:
+                    # then save model
+                    self.model.save('saved_models/best_model') 
+                    self.best_loss = self.valid_loss[ep]               
                 # Print on progress bar
                 tr.set_postfix(train="{0:.2e}".format(self.test_loss[ep]),
-                               valid="{0:.2e}".format(self.valid_loss[ep]))
-                               #lr="{0:.2e}".format(self.optimizer._rate)) 
+                               valid="{0:.2e}".format(self.valid_loss[ep]),
+                               lr="{0:.2e}".format(self.optimizer._rate))
+        print(f'Best valid loss = {self.best_loss}') 
         return(self.test_loss, self.valid_loss)
         
     def __repr__(self) -> str:

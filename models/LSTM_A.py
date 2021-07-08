@@ -119,5 +119,5 @@ class LSTM_Attention(nn.Module):
     def save(self, path='last_model'):
         "Saves model to the saved_models folder"
         torch.save(self.state_dict(), path)
-        print(f'Saved model to {path}')
+        #print(f'Saved model to {path}')
         return None
