@@ -7,14 +7,8 @@ Created on Wed Mar 24 16:37:09 2021
 
 ### IMPORTS
 
-import numpy as np
-from tqdm import trange
-#from soft_dtw_cuda import SoftDTW
-from torch.utils.tensorboard import SummaryWriter
 import torch
 import torch.nn as nn
-from torch import optim
-
 
 ### CLASSES
 
@@ -51,10 +45,10 @@ class Decoder(nn.Module):
     def forward(self, x, hidden, cell):
         """ 
         For S, N, H the Source length, Batch size and Hidden size:
-            x.shape = (S, N, H) : input
-            out.shape = (S, N, H) : hidden states for all times
+            x.shape = (1, N, H) : input
             hidden.shape = (1, N, H) : hidden state
             cell.shape = (1, N, H) : cell state
+            out.shape = (N, E) : hidden state
         """  
         out, (hidden, cell) = self.lstm(x, (hidden, cell))
         out = self.linear(out.squeeze(0))
@@ -88,3 +82,4 @@ class LSTM_EncoderDecoder(nn.Module):
             outputs[t] = out_d
             input_d = out_d.unsqueeze(0)
         return(outputs)
+
