@@ -16,10 +16,11 @@ import matplotlib.pyplot as plt
 
 class Data:
     
-    def __init__(self, modes, nbr_snaps=-1, file_name=None) -> None:
+    def __init__(self, modes, nbr_snaps=-1, file_name=None, multivariate=False) -> None:
         
         self.x_train, self.y_train = [], []
         self.x_valid, self.y_valid = [], []
+        self.multivariate = multivariate
         # Generate
         if file_name == None:
             self.data = self.GenerateData()
@@ -101,11 +102,12 @@ class Data:
         # Noise
         x_train = x_train + np.random.normal(0, 0.02, x_train.shape) if noise else x_train
         # reshape
-        Reshaping = lambda x: x.reshape(-1, x.shape[1]*x.shape[2], 1)
-        x_train = Reshaping(x_train)
-        y_train = Reshaping(y_train)
-        x_valid = Reshaping(x_valid)
-        y_valid = Reshaping(y_valid)
+        if not self.multivariate:
+            Reshaping = lambda x: x.reshape(-1, x.shape[1]*x.shape[2], 1)
+            x_train = Reshaping(x_train)
+            y_train = Reshaping(y_train)
+            x_valid = Reshaping(x_valid)
+            y_valid = Reshaping(y_valid)
         # Convert tensor and set device
         self.device = device if device is not None else torch.device("cuda")  # train on cpu or gpu
         self.x_train, self.y_train, self.x_valid, self.y_valid =  Convert2Torch(x_train, y_train, x_valid, y_valid, device=self.device)
@@ -158,7 +160,7 @@ class Data:
         text += f'y_valid : {self.y_valid.shape}\n'
         
         plt.plot(self.x_train[:, 0, 0].to('cpu').detach())
-        plt.plot(self.x_train[:, -1, 0].to('cpu').detach())
+        plt.plot(self.x_train[:, 0, -1].to('cpu').detach())
         return(text)
         
            
