@@ -16,62 +16,63 @@ import matplotlib.pyplot as plt
 
 class Data:
     
-    def __init__(self, modes, nbr_snaps=-1, file_name=None, multivariate=False) -> None:
+    def __init__(self, modes=range(10), nbr_snaps=-1, filename=None, multivar=False) -> None:
         
         self.x_train, self.y_train = [], []
         self.x_valid, self.y_valid = [], []
-        self.multivariate = multivariate
+        self.multivar = multivar
+        self.modes = modes
         # Generate
-        if file_name == None:
-            self.data = self.GenerateData()
+        if filename == None:
+            self.data = self.GenerateData(modes=modes)
+            self.filename = 'generated_sinus'
         # or Import
         else:
-            self.file_name = file_name
-            self.modes = modes
-            self.data = self.ImportData(file_name, modes, nbr_snaps)
-        self.Quantization(round=1)
+            self.filename = filename
+            self.data = self.ImportData(filename, modes, nbr_snaps)
+        self.Quantization(round=4)
         
     ### INITIALASING THE DATA
     
-    def ImportData(self, file_name, modes=range(10), nbr_snaps=-1):
+    def ImportData(self, filename, modes=range(10), nbr_snaps=-1):
         """Open and read coeff file. Truncate and normalize"""
         # Import
-        if file_name[-4:] == ".dat":
+        if filename[-4:] == ".dat":
             with open("Data/podcoeff_095a05.dat", "rb") as f:
                 egeinvalue = pickle.load(f)
                 data = np.array(pickle.load(f))      
-        elif file_name[-7:] == ".pickle":
-            with open(file_name, "rb") as handle:
+        elif filename[-7:] == ".pickle":
+            with open(filename, "rb") as handle:
                 eigd, eigvec, meanfield, x, y, z = pickle.load(handle)
                 data = np.array(eigvec)
         # Pod from Yann
-        elif file_name[-2:] == ".d":
-            data = np.loadtxt(file_name)[:, 1:]
+        elif filename[-2:] == ".d":
+            data = np.loadtxt(filename)[:, 1:]
         # Pod from Berangere
         else:
-            data = np.loadtxt(file_name).reshape(305, 305, 3)  # Time, Mode, an(t)
+            data = np.loadtxt(filename).reshape(305, 305, 3)  # Time, Mode, an(t)
             data = data[:, :, 2]
             data = np.transpose(data)
             
         # Truncate and Normalise
         data = data[:nbr_snaps, modes]
-        print(f'Imported {file_name}')
+        print(f'Using data from {filename}')
         return(self.Normalise(data))
     
-    def GenerateData(self, tf=2*np.pi, length=400, nbr_features=10):
+    def GenerateData(self, tf=2*np.pi, length=400, modes=range(10)):
         """Generate artificial data with sinusoidal shape"""
         t = np.linspace(0.0, tf, length) # time array
-        data = np.zeros((t.size, nbr_features))
+        data = np.zeros((t.size, len(modes)))
         # Amplitude modulation
-        for i in range(nbr_features):
-            f = float(i * 0.5 + 10)
+        for idx, i in enumerate(modes):
+            f = float((i+1)* 0.1)
             f_m = f / 2
             A = 1
             B = 0.0
             ct = A * np.cos(2 * np.pi * f * t)
             mt = B * np.cos(2 * np.pi * f_m * t + np.random.rand())
-            data[:, i] = (1 + mt / A) * ct
-        print('Generated artificial sinusoidal dataset')
+            data[:, idx] = (1 + mt / A) * ct
+        print('Using artificialy generated sinusoidal dataset.')
         # Return Nomalised dataset
         return(self.Normalise(data))
     
@@ -102,7 +103,7 @@ class Data:
         # Noise
         x_train = x_train + np.random.normal(0, 0.02, x_train.shape) if noise else x_train
         # reshape
-        if not self.multivariate:
+        if not self.multivar:
             Reshaping = lambda x: x.reshape(-1, x.shape[1]*x.shape[2], 1)
             x_train = Reshaping(x_train)
             y_train = Reshaping(y_train)
@@ -126,7 +127,7 @@ class Data:
         return(data_train, data_test)
     
     def WindowedDataset(self, data_group):
-        """ Subsamples time serie into an array X of multiple windows of size iw, 
+        """Subsamples time serie into an array X of multiple windows of size iw, 
         and an array Y including target windows of size ow.
         iw [int]     : number of y samples to give model
         ow [int]     : number of future y samples to predict
@@ -153,16 +154,32 @@ class Data:
         return(x, y)
     
     def __repr__(self) -> str:
-        text =  f'device : {self.device}\n'
-        text += f'x_train : {self.x_train.shape}\n'
-        text += f'y_train : {self.y_train.shape}\n'
-        text += f'x_valid : {self.x_valid.shape}\n'
-        text += f'y_valid : {self.y_valid.shape}\n'
-        
-        plt.plot(self.x_train[:, 0, 0].to('cpu').detach())
-        plt.plot(self.x_train[:, 0, -1].to('cpu').detach())
+        text = f"""
+        Data imported : {self.filename} 
+        Modes selected : {self.modes[0]} to {self.modes[-1]}
+        in, out, stride : {self.iw}, {self.ow}, {self.stride}
+        x_train : {self.x_train.shape}
+        y_train : {self.y_train.shape}
+        x_valid : {self.x_valid.shape}
+        y_valid : {self.y_valid.shape}
+        """
         return(text)
-        
+    
+    def plot(self, path):
+        """ plot last and first element of data"""
+        if self.multivar:
+            x_first = self.x_train[:, 0, 0].to('cpu').detach()
+            x_last = self.x_train[:, 0, -1].to('cpu').detach()
+        else:
+            x_first = self.x_train[:, 0, 0].to('cpu').detach()
+            x_last = self.x_train[:, -1, 0].to('cpu').detach()
+        fig, ax = plt.subplots()
+        ax.plot(x_first)
+        ax.plot(x_last)
+        ax.set_ylabel('amplitude')
+        ax.set_xlabel('timesteps')
+        plt.title('The first and last elements of the dataset')
+        plt.savefig(path+'data_exemples')
            
 class CustomDataset(Dataset):
     "Used in the data class"
@@ -181,4 +198,4 @@ class CustomDataset(Dataset):
 if __name__ == "__main__":
     mydata = Data()
     mydata.PrepareDataset(device="cpu")
-
+    print(mydata)

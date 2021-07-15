@@ -55,6 +55,7 @@ class LSTM_Attention(nn.Module):
         # Initialise outputs
         outputs = torch.zeros(target_len,  x.shape[1], x.shape[2]).to(x.device) # (T, N, E)
         self.alphas = torch.zeros(x.shape[0], x.shape[1], target_len).to(x.device) # (S, N, T)
+
         # Call Encoder 
         out_e, hidden_e, cell_e = self.encoder(x)
         # Initialise Decoder
@@ -65,7 +66,7 @@ class LSTM_Attention(nn.Module):
         for t in range(target_len):
             # Call Decoder
             hidden_d, alpha = self.attention(out_e, hidden_d)
-            self.alphas[:, :, t] = alpha.squeeze()
+            self.alphas[:, :, t] = alpha.squeeze(-1)
             out_d, hidden_d, cell_d = self.decoder(input_d, hidden_d, cell_d)
             outputs[t] = out_d
             input_d = out_d.unsqueeze(0)

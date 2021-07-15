@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from torch import optim
-from torch.optim import optimizer
 from tqdm import trange
 
 
@@ -34,8 +33,9 @@ class Trainer():
                     self.optimizer.step()
         return(batch_loss/n_batches)
         
-    def train(self, epochs, bs, lr):
-        nbr = '{:.4}'.format(np.random.random())[2:]
+    def train(self, epochs, bs, lr, path):
+        print('Training ...')
+        self.path = path
         self.bs = bs
         self.test_loss = np.full(epochs, np.nan) 
         self.valid_loss = np.full(epochs, np.nan) 
@@ -59,32 +59,31 @@ class Trainer():
                 # Every 10 ep check if valid loss is the best 
                 if self.valid_loss[ep] < self.best_loss and ep%10==0:
                     # then save model
-                    self.model.save(f'saved_models/best_model_{nbr}') 
+                    self.model.save(path+'best_model') 
                     self.best_loss = self.valid_loss[ep]               
                 # Print on progress bar
                 tr.set_postfix(train="{0:.2e}".format(self.test_loss[ep]),
                                valid="{0:.2e}".format(self.valid_loss[ep]))#,
                                #lr="{0:.2e}".format(self.optimizer._rate))
-        print(f'Best valid loss = {self.best_loss}')
         # Export attention coeffs for exploitation
         
         return(self.test_loss, self.valid_loss)
         
     def __repr__(self) -> str:
+        text  = 'Device = '+torch.cuda.get_device_name(self.data.device)
+        text += f'\nBest valid loss = {self.best_loss}'
+        return(text)
+    
+    def plot_loss(self):
         fig, ax = plt.subplots()
         ax.plot(np.log10(self.test_loss), label='Training set')
         ax.plot(np.log10(self.valid_loss), label='Validation set')
         ax.set_xlabel('epochs')
         ax.set_ylabel('loss')
-        plt.plot()
-        return('\n device = '+torch.cuda.get_device_name(self.data.device))
+        plt.savefig(self.path+'loss')
+        return None
         
-    def predict(self, **kwargs):
-        self.model.eval()
-        with torch.no_grad():
-            outputs = self.model(**kwargs)
-            return(outputs.cpu().detach())    
-    
+
 class NoamOpt:
     """Optimizer wrapper that implements adaptative rate
     as in Attention is all you need Paper"""
@@ -124,6 +123,7 @@ if __name__ == '__main__':
     lr =  [opt.rate(i)  for i in range(1, epochs)]
     print('{0:.2e}'.format(max(lr)))
     
+    # plot lr
     fig, ax = plt.subplots()
     ax.plot(np.arange(1, epochs), lr)
     ax.set_yscale('log')
