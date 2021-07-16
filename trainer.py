@@ -37,6 +37,7 @@ class Trainer():
         print('Training ...')
         self.path = path
         self.bs = bs
+        self.epochs = epochs
         self.test_loss = np.full(epochs, np.nan) 
         self.valid_loss = np.full(epochs, np.nan) 
         self.best_loss = 1e10
@@ -70,8 +71,14 @@ class Trainer():
         return(self.test_loss, self.valid_loss)
         
     def __repr__(self) -> str:
-        text  = 'Device = '+torch.cuda.get_device_name(self.data.device)
-        text += f'\nBest valid loss = {self.best_loss}'
+        text = '\nTraining : '
+        text += '\n\tDevice = '+torch.cuda.get_device_name(self.data.device)
+        text += f'\n\tNumber of epochs = {self.epochs}'
+        text += f'\n\tBatch size = {self.bs}'
+        text += f'\n\tBest valid loss = {self.best_loss:.3e}'
+        
+        text += f'\n\nModel : \n\t{self.model}'
+        
         return(text)
     
     def plot_loss(self):

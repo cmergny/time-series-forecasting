@@ -82,4 +82,10 @@ class LSTM_EncoderDecoder(nn.Module):
             outputs[t] = out_d
             input_d = out_d.unsqueeze(0)
         return(outputs)
+    
+    def save(self, path='last_model'):
+        "Saves model to the saved_models folder"
+        torch.save(self.state_dict(), path)
+        #print(f'Saved model to {path}')
+        return None
 

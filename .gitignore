@@ -1,9 +1,13 @@
-__pycache__/*
+
 runs/*
 figures/*
 data/*.pickle
 data/*.d
 saved_models/__pycache__/*
+__pycache__/*
 models/__pycache__/*
 utils/__pycache__/*
+.vscode/*
+cluster/output*
+cluster/error*
 

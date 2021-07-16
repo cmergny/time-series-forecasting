@@ -154,15 +154,13 @@ class Data:
         return(x, y)
     
     def __repr__(self) -> str:
-        text = f"""
-        Data imported : {self.filename} 
-        Modes selected : {self.modes[0]} to {self.modes[-1]}
-        in, out, stride : {self.iw}, {self.ow}, {self.stride}
-        x_train : {self.x_train.shape}
-        y_train : {self.y_train.shape}
-        x_valid : {self.x_valid.shape}
-        y_valid : {self.y_valid.shape}
-        """
+        text = f'\nData : \n\tfile name : {self.filename}\n'
+        text += f'\tmodes selected : {self.modes[0]} to {self.modes[-1]}\n'
+        text += f'\tin, out, stride : {self.iw}, {self.ow}, {self.stride}\n'
+        text += f'\tx_train : {self.x_train.shape}\n'
+        text += f'\ty_train : {self.y_train.shape}\n'
+        text += f'\tx_valid : {self.x_valid.shape}\n'
+        text += f'\ty_valid : {self.y_valid.shape}\n'
         return(text)
     
     def plot(self, path):

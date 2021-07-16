@@ -1,10 +1,11 @@
 ### IMPORTS
 
 import os
-import glob 
+import glob
+import shutil 
 
-import training
-import utils.import_data as import_data
+import trainer
+import import_data
 
 from models.LSTM_AE import LSTM_EncoderDecoder
 from models.LSTM_A import LSTM_Attention
@@ -13,10 +14,18 @@ from models.multiscale import MultiScaleLSTMA
 
 ### FUNCTIONS
 
-def makedir():
+def makedir(overwrite=False):
     """ Create a directory for saving"""
-    liste = glob.glob('runs/run_*')
-    idx = int(max(liste).split('_')[1])+1 if len(liste)>0 else 1
+    # list all runs
+    folders = glob.glob('runs/run_*')
+    # find next indice for naming
+    idx = int(max(folders).split('_')[1])+1 if len(folders)>0 else 1
+    # overwrite on folder run_01 if asked
+    if overwrite and 'runs/run_01' in folders:
+        shutil.rmtree('runs/run_01/')
+        idx = 1
+        print('Overwriting folder run_01...')
+    # Create dirs 
     path = 'runs/run_{:02d}/'.format(idx)
     os.makedirs(path)
     os.makedirs(path+'preds/')
@@ -34,19 +43,20 @@ def save_run(path, data, trainer):
 ### MAIN
 
 # Create Dataset
-path = makedir() # used for saving
-data = import_data.Data(filename='data/coeff', modes=range(10, 50), multivar=False)
-data.PrepareDataset(in_out_stride=(80, 1, 5))
+path = makedir(overwrite=True) # used for saving
+data = import_data.Data(filename='data/coeff', modes=range(70, 120), multivar=False)
+data.PrepareDataset(in_out_stride=(80, 10, 40))
 print(data)
 
 # Create Model
-#model = RealTransfo(d_model=128, nhead=8).to(mydata.device)
+#model = LSTM_EncoderDecoder(data.x_train.shape[2], 32).to(data.device)
+#model = RealTransfo(d_model=128, nhead=8).to(data.device)
 model = LSTM_Attention(data.x_train.shape[2], 32).to(data.device)
 #model = MultiScaleLSTMA(data.x_train.shape[2], 16).to(data.device)
-trainer = training.Trainer(model, data)
+trainer = trainer.Trainer(model, data)
 
 # Training
-trainer.train(epochs=40, bs=8, lr=8e-4, path=path)
+trainer.train(epochs=300, bs=32, lr=8e-4, path=path)
 
 # Save
 save_run(path, data, trainer)
