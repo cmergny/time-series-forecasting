@@ -30,6 +30,7 @@ class Predicter:
         # Select input arrays
         x = self.data.x_valid[:, batch, :].unsqueeze(1) # (S, 1, E)
         y = self.data.y_valid[:, batch, :].unsqueeze(1) # (S, 1, E)
+        
         p = torch.zeros(target_len, x.shape[1], x.shape[2]).to(x.device)
         # Predict one time ahead and repeat 
         for i in range(target_len):
@@ -39,17 +40,18 @@ class Predicter:
         # Find target array using quick maths
         idx = target_len // self.data.stride + 1
         end =  -(self.data.stride- target_len%self.data.stride)
-        y = self.data.x_valid[end-target_len:end, batch+idx, :].unsqueeze(1) 
+        y = self.data.x_valid[end-target_len:end, batch+idx, :]
         # Plot 
-        x = self.data.x_valid[:, batch, :].unsqueeze(1) # (S, 1, E)
+        x = self.data.x_valid[:, batch, :] # (S, 1, E)
+        p = p.squeeze(1)
         self.plot_predictions(x, y, p, mode=mode, batch=batch)        
     
-    def mutltistep_pred(self, batch, bs, target_len):
+    def mutltistep_pred(self, batch, bs, target_len, mode=0):
         x = self.data.x_valid[:, batch:batch+bs, :] # (S, N, E)
         y = self.data.y_valid[:, batch:batch+bs, :] # (S, N, E)
         # Predict and plot
         p = self.predict(x=x, target_len=target_len)
-        self.plot_predictions(x, y, p, mode=0, batch=batch)    
+        self.plot_predictions(x[:, batch, :], y[:, batch, :], p[:, batch, :], mode=mode, batch=batch)    
         
     
     def plot_predictions(self, X, Y, P, mode, batch):
@@ -122,14 +124,14 @@ if __name__ == '__main__':
         
     path = 'runs/run_01/'
     # Create Dataset
-    data = import_data.Data(filename='data/coeff', modes=range(100, 120), multivar=False)
-    data.PrepareDataset(in_out_stride=(80, 10, 40))
+    data = import_data.Data(filename='data/coeff', modes=range(70, 120), multivar=True)
+    data.PrepareDataset(in_out_stride=(80, 10, 5))
 
     # Create Model
     #model = LSTM_EncoderDecoder(data.x_train.shape[2], 32).to(data.device)
     #model = RealTransfo(d_model=128, nhead=8).to(data.device)
-    model = LSTM_Attention(data.x_train.shape[2], 32).to(data.device)
-    #model = MultiScaleLSTMA(mydata.x_train.shape[2], 16).to(mydata.device)
+    #model = LSTM_Attention(data.x_train.shape[2], 32).to(data.device)
+    model = MultiScaleLSTMA(data.x_train.shape[2], 32).to(data.device)
     
     # Load
     predicter = Predicter(model, data, path)
@@ -137,7 +139,8 @@ if __name__ == '__main__':
     print(f'Loaded best_model from {path}')
 
     # Predict
-    #predicter.autoreg_pred(batch=11, mode=0, target_len=10)
-    predicter.mutltistep_pred(batch=35, bs=32, target_len=data.ow)
-    alphas = predicter.plot_single_attention(model, batch=0)
+    #predicter.autoreg_pred(batch=0, mode=10, target_len=10)
+    predicter.mutltistep_pred(batch=0, mode=40, bs=64, target_len=data.ow)
+    alphas = predicter.plot_attention(model, batch=0, mode=40)
+    #alphas = predicter.plot_single_attention(model, batch=0)
 

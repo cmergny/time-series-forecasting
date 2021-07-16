@@ -44,19 +44,19 @@ def save_run(path, data, trainer):
 
 # Create Dataset
 path = makedir(overwrite=True) # used for saving
-data = import_data.Data(filename='data/coeff', modes=range(70, 120), multivar=False)
-data.PrepareDataset(in_out_stride=(80, 10, 40))
+data = import_data.Data(filename='data/coeff', modes=range(70, 120), multivar=True)
+data.PrepareDataset(in_out_stride=(80, 10, 1))
 print(data)
 
 # Create Model
 #model = LSTM_EncoderDecoder(data.x_train.shape[2], 32).to(data.device)
 #model = RealTransfo(d_model=128, nhead=8).to(data.device)
-model = LSTM_Attention(data.x_train.shape[2], 32).to(data.device)
-#model = MultiScaleLSTMA(data.x_train.shape[2], 16).to(data.device)
+#model = LSTM_Attention(data.x_train.shape[2], 32).to(data.device)
+model = MultiScaleLSTMA(data.x_train.shape[2], 32).to(data.device)
 trainer = trainer.Trainer(model, data)
 
 # Training
-trainer.train(epochs=300, bs=32, lr=8e-4, path=path)
+trainer.train(epochs=500, bs=48, lr=8e-4, path=path)
 
 # Save
 save_run(path, data, trainer)
