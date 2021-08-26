@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Mar 24 16:37:09 2021
-
-@author: Cyril
-"""
-
 ### IMPORTS
 
 import torch
@@ -29,7 +22,7 @@ class Encoder(nn.Module):
             hidden.shape = (1, N, H) : hidden state
             cell.shape = (1, N, H) : cell state
         """   
-        out, (hidden, cell) = self.lstm(x) # hidden not provided : both h_0 and c_0 default to zero.
+        out, (hidden, cell) = self.lstm(x) # if no hidden args : h_0, c_0 = 0, 0
         return(out, hidden, cell)
 
 class Decoder(nn.Module):
@@ -75,7 +68,7 @@ class LSTM_EncoderDecoder(nn.Module):
         input_d = x[-1, :, :].unsqueeze(0) # shape(bs, n_features)
         hidden_d, cell_d = hidden_e, cell_e
         
-        # Iterate by values to predict
+        # Iterate by len of prediction
         for t in range(target_len):
             # Call Decoder
             out_d, hidden_d, cell_d = self.decoder(input_d, hidden_d, cell_d)

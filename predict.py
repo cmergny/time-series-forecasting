@@ -1,3 +1,5 @@
+### IMPORTS
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -11,6 +13,8 @@ from models.multiscale import MultiScaleLSTMA
 
 ### Predicter class
 class Predicter:
+    """Predicter class for inference.
+    Takes a model and data to predict new samples"""
     
     def __init__(self, model, data, path) -> None:
         self.model = model
@@ -47,6 +51,7 @@ class Predicter:
         self.plot_predictions(x, y, p, mode=mode, batch=batch)        
     
     def mutltistep_pred(self, batch, bs, target_len, mode=0):
+        """ Predict directly the next x steps"""
         x = self.data.x_valid[:, batch:batch+bs, :] # (S, N, E)
         y = self.data.y_valid[:, batch:batch+bs, :] # (S, N, E)
         # Predict and plot
@@ -124,14 +129,14 @@ if __name__ == '__main__':
         
     path = 'runs/run_01/'
     # Create Dataset
-    data = import_data.Data(filename='data/coeff', modes=range(70, 120), multivar=True)
-    data.PrepareDataset(in_out_stride=(80, 10, 5))
+    data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 8), multivar=True)
+    data.PrepareDataset(in_out_stride=(100, 20, 50))
 
     # Create Model
-    #model = LSTM_EncoderDecoder(data.x_train.shape[2], 32).to(data.device)
+    model = LSTM_EncoderDecoder(data.x_train.shape[2], 32).to(data.device)
     #model = RealTransfo(d_model=128, nhead=8).to(data.device)
     #model = LSTM_Attention(data.x_train.shape[2], 32).to(data.device)
-    model = MultiScaleLSTMA(data.x_train.shape[2], 32).to(data.device)
+    #model = MultiScaleLSTMA(data.x_train.shape[2], 32).to(data.device)
     
     # Load
     predicter = Predicter(model, data, path)
@@ -140,7 +145,7 @@ if __name__ == '__main__':
 
     # Predict
     #predicter.autoreg_pred(batch=0, mode=10, target_len=10)
-    predicter.mutltistep_pred(batch=0, mode=40, bs=64, target_len=data.ow)
-    alphas = predicter.plot_attention(model, batch=0, mode=40)
+    predicter.mutltistep_pred(batch=0, mode=3, bs=4, target_len=data.ow)
+    #alphas = predicter.plot_attention(model, batch=0, mode=40)
     #alphas = predicter.plot_single_attention(model, batch=0)
 

@@ -7,6 +7,7 @@ from tqdm import trange
 
 
 class Trainer():
+    """Trainer class for training."""
     
     def __init__(self, model, mydata) -> None:
         self.model = model
@@ -34,6 +35,7 @@ class Trainer():
         return(batch_loss/n_batches)
         
     def train(self, epochs, bs, lr, path):
+        """Train the NN for a set number of epochs"""
         print('Training ...')
         self.path = path
         self.bs = bs
@@ -67,10 +69,11 @@ class Trainer():
                                valid="{0:.2e}".format(self.valid_loss[ep]))#,
                                #lr="{0:.2e}".format(self.optimizer._rate))
         # Export attention coeffs for exploitation
-        
+        self.save_run()
         return(self.test_loss, self.valid_loss)
         
     def __repr__(self) -> str:
+        """Printing the Trainer class shows its important attributes"""
         text = '\nTraining : '
         text += '\n\tDevice = '+torch.cuda.get_device_name(self.data.device)
         text += f'\n\tNumber of epochs = {self.epochs}'
@@ -82,6 +85,8 @@ class Trainer():
         return(text)
     
     def plot_loss(self):
+        """Plot and save the logarithm of the training and
+            validation loss over all the epochs"""
         fig, ax = plt.subplots()
         ax.plot(np.log10(self.test_loss), label='Training set')
         ax.plot(np.log10(self.valid_loss), label='Validation set')
@@ -89,7 +94,17 @@ class Trainer():
         ax.set_ylabel('loss')
         plt.savefig(self.path+'loss')
         return None
-        
+    
+    def save_run(self):
+        """ Saves important infos and model
+            in the summary.txt file"""
+        with open(self.path+'summary.txt', 'w') as f:
+            f.write(str(self.data))
+            f.write(str(self))
+        self.data.plot(self.path)
+        self.plot_loss()
+        return None
+            
 
 class NoamOpt:
     """Optimizer wrapper that implements adaptative rate

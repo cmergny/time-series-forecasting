@@ -13,8 +13,12 @@ import torch.nn as nn
 from models.LSTM_AE import Encoder, Decoder
 from models.LSTM_A import Attention
 
+### MODEL
+
 class MultiScaleAttention(nn.Module):
-    
+    """ Multi-scale Context Based Attention for Dynamic Music Emotion Prediction
+    Ma et al. 2017
+    """
     def __init__(self, hidden_size) -> None:
         super().__init__()
         self.linear1 = nn.Linear(hidden_size, hidden_size)
@@ -25,8 +29,8 @@ class MultiScaleAttention(nn.Module):
         
     def forward(self, C, hidden_d):
         # C.shape = (E, N, H)
-        hidden_d = hidden_d.repeat(C.shape[0], 1, 1) 
-        energy = self.linear3(self.tanh(self.linear1(C)+self.linear2(hidden_d))) # (E, N, 1)
+        hidden_d = hidden_d.repeat(C.shape[0], 1, 1) # (E, N, H)
+        energy = self.linear3(self.tanh(self.linear1(C+hidden_d))) # (E, N, 1)
         beta = self.softmax(energy) # (E, N, 1)
         c = torch.einsum("enl,enh->lnh", beta, C) # c.shape = (1, N, H)
         return(c, beta)      
@@ -41,7 +45,13 @@ class MultiScaleLSTMA(nn.Module):
         self.decoders = nn.ModuleList([Decoder(1, hidden_size) for _ in range(input_size)])
         self.multiscale_attention = MultiScaleAttention(hidden_size)
         
-    def forward(self, x, target_len):       
+    def forward(self, x, target_len):
+        """Pass all modes into differents lstm encoders.
+           Then for each mode:
+                - Compute the attention bw the encoder output of the mode
+                and the encoder outputs of all modes
+                - Decode the attention vector to predict the next p steps
+        """       
         # x.shape = (S, N, E)
         
         # Initialise outputs and self.hiddens self.cells
@@ -55,18 +65,19 @@ class MultiScaleLSTMA(nn.Module):
             xi = x[:, :, i].unsqueeze(-1) # (S, N, 1)
             _, self.hiddens[i], self.cells[i] = encoder(xi) #(1, N, H)
         
-        # Call Decoder for all modes
+        # For each mode
         for i in range(self.input_size):
+            # Init Decoder inputs
             input_d = x[-1, :, i].unsqueeze(-1).unsqueeze(0)
             hidden_d, cell_d = self.hiddens[i].unsqueeze(0), self.cells[i].unsqueeze(0)
+            # Call Attention bw hiddens of all modes and current mode
             hidden_d, alpha = self.multiscale_attention(self.hiddens, hidden_d)
-            # issue All modes give the same attention !
+            # Get attention weights
             self.alphas[:, :, i] = alpha.squeeze(-1) # alpha.shape = (E, N, 1) -> (E, N)
-            
+            # Call Decoder p times
             for t in range(target_len):
-                out_d, hidden_d, cell_d = self.decoders[i](input_d, hidden_d, cell_d)
-                # out.shape = (N, E=1)
-                outputs[t, :, i] = out_d.squeeze() 
+                out_d, hidden_d, cell_d = self.decoders[i](input_d, hidden_d, cell_d) 
+                outputs[t, :, i] = out_d.squeeze() # out_d.shape was = (N, E=1)
                 input_d = out_d.unsqueeze(0) # input_d.shape = (1, N, 1)
                 
         return(outputs)

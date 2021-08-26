@@ -1,9 +1,4 @@
-
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Mar 24 19:28:56 2021
-@author: Cyril
-"""
+### IMPORTS
 
 import torch
 import numpy as np
@@ -12,12 +7,13 @@ from  torch.utils.data import Dataset
 import matplotlib.pyplot as plt
 
 
-### DATA
+### CLASSES
 
 class Data:
-    
+    """Contains imported or generated multivariate time series
+       Attributes structures the data for ML training"""
+       
     def __init__(self, modes=range(10), nbr_snaps=-1, filename=None, multivar=False) -> None:
-        
         self.x_train, self.y_train = [], []
         self.x_valid, self.y_valid = [], []
         self.multivar = multivar
@@ -32,7 +28,7 @@ class Data:
             self.data = self.ImportData(filename, modes, nbr_snaps)
         self.Quantization(round=4)
         
-    ### INITIALASING THE DATA
+    ## INITIALASING THE DATA
     
     def ImportData(self, filename, modes=range(10), nbr_snaps=-1):
         """Open and read coeff file. Truncate and normalize"""
@@ -48,6 +44,9 @@ class Data:
         # Pod from Yann
         elif filename[-2:] == ".d":
             data = np.loadtxt(filename)[:, 1:]
+            
+        elif filename == "data/spring_data.txt":
+            data = np.loadtxt(filename)  
         # Pod from Berangere
         else:
             data = np.loadtxt(filename).reshape(305, 305, 3)  # Time, Mode, an(t)
@@ -77,15 +76,17 @@ class Data:
         return(self.Normalise(data))
     
     def Normalise(self, data):
+        """Normalise data for training"""
         for i in range(data.shape[1]):
             data[:, i] -= np.mean(data[:, i])  # remove mean value
             data[:, i] /= np.max(np.abs(data[:, i]))  # normalize
         return data
 
     def Quantization(self, round=1e3):
+        """Rounds the continous value in the data by quantas"""
         self.data = np.round(self.data, round)
         
-    ### PREPARING THE DATA
+    ## PREPARING THE DATA
     
     def PrepareDataset(self, split=0.7, noise=None, in_out_stride=(100, 30, 10), device=None):
         """Split dataset into four torch tensors x_train, x_valid, y_train, y_valid"""
@@ -154,6 +155,8 @@ class Data:
         return(x, y)
     
     def __repr__(self) -> str:
+        """Printing an instance of the Data class shows its
+           important attributes"""
         text = f'\nData : \n\tfile name : {self.filename}\n'
         text += f'\tmodes selected : {self.modes[0]} to {self.modes[-1]}\n'
         text += f'\tin, out, stride : {self.iw}, {self.ow}, {self.stride}\n'
@@ -164,7 +167,7 @@ class Data:
         return(text)
     
     def plot(self, path):
-        """ plot last and first element of data"""
+        """Plots last and first element of data"""
         if self.multivar:
             x_first = self.x_train[:, 0, 0].to('cpu').detach()
             x_last = self.x_train[:, 0, -1].to('cpu').detach()

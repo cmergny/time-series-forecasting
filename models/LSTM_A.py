@@ -17,8 +17,8 @@ from models.LSTM_AE import Encoder, Decoder
 
     
 class Attention(nn.Module):
-    """ Following Bahdanau et al. 2015
-    Neural machine translation by jointly learning to align and translate
+    """Attention module inspired by Bahdanau et al. 2015
+    "Neural machine translation by jointly learning to align and translate"
     """
     def __init__(self, input_size, hidden_size) -> None:
         super().__init__()
@@ -40,8 +40,7 @@ class Attention(nn.Module):
       
 class LSTM_Attention(nn.Module):
     """
-    Use the two Encoder and Decoder classes to train a LSTM neural network
-    Can also make predictions once the NN is trained
+    Use the two Encoder and Decoder classes with attention to train a LSTM neural network
     """
     def __init__(self, input_size, hidden_size):
         """ Initialising variables with param and Encoder/Decoder classes"""

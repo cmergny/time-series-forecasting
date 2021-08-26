@@ -15,7 +15,7 @@ from models.multiscale import MultiScaleLSTMA
 ### FUNCTIONS
 
 def makedir(overwrite=False):
-    """ Create a directory for saving"""
+    """ Create a directory called run_xx for saving"""
     # list all runs
     folders = glob.glob('runs/run_*')
     # find next indice for naming
@@ -32,31 +32,22 @@ def makedir(overwrite=False):
     print(f'Created {path} directory.')
     return(path)
 
-def save_run(path, data, trainer):
-    """ Saves important infos and model"""
-    with open(path+'summary.txt', 'w') as f:
-        f.write(str(data))
-        f.write(str(trainer))
-    data.plot(path)
-    trainer.plot_loss()
 
 ### MAIN
 
-# Create Dataset
-path = makedir(overwrite=True) # used for saving
-data = import_data.Data(filename='data/coeff', modes=range(70, 120), multivar=True)
-data.PrepareDataset(in_out_stride=(80, 10, 1))
-print(data)
+# Create current run dir
+path = makedir(overwrite=True) 
+# Import and define dataset
+data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 8), multivar=True)
+data.PrepareDataset(in_out_stride=(100, 20, 50))
 
 # Create Model
-#model = LSTM_EncoderDecoder(data.x_train.shape[2], 32).to(data.device)
+model = LSTM_EncoderDecoder(data.x_train.shape[2], 32).to(data.device)
 #model = RealTransfo(d_model=128, nhead=8).to(data.device)
 #model = LSTM_Attention(data.x_train.shape[2], 32).to(data.device)
-model = MultiScaleLSTMA(data.x_train.shape[2], 32).to(data.device)
+#model = MultiScaleLSTMA(data.x_train.shape[2], 32).to(data.device)
+
+# Training and saving model
 trainer = trainer.Trainer(model, data)
+trainer.train(epochs=100, bs=4, lr=8e-4, path=path)
 
-# Training
-trainer.train(epochs=500, bs=48, lr=8e-4, path=path)
-
-# Save
-save_run(path, data, trainer)

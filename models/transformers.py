@@ -102,6 +102,6 @@ class RealTransfo(nn.Module):
         out = self.linear2(out)
         return(out)
 
-#%% MAIN
+### MAIN
 if __name__ == "__main__":
     pass
