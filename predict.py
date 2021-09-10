@@ -1,4 +1,4 @@
-### IMPORTS
+#%% IMPORTS
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,45 +27,51 @@ class Predicter:
         with torch.no_grad():
             outputs = self.model(**kwargs)
             return(outputs)
-        
-    def autoreg_pred(self, batch, mode, target_len):
-        """ Predit for multiple values"""
-        print('Predicting...')
-        # Select input arrays
-        x = self.data.x_valid[:, batch, :].unsqueeze(1) # (S, 1, E)
-        y = self.data.y_valid[:, batch, :].unsqueeze(1) # (S, 1, E)
-        
-        p = torch.zeros(target_len, x.shape[1], x.shape[2]).to(x.device)
-        # Predict one time ahead and repeat 
-        for i in range(target_len):
-            p_valid = self.predict(x=x, target_len=1)
-            p[i] = p_valid
-            x = torch.cat((x[1:], p_valid))
-        # Find target array using quick maths
-        idx = target_len // self.data.stride + 1
-        end =  -(self.data.stride- target_len%self.data.stride)
-        y = self.data.x_valid[end-target_len:end, batch+idx, :]
-        # Plot 
-        x = self.data.x_valid[:, batch, :] # (S, 1, E)
-        p = p.squeeze(1)
-        self.plot_predictions(x, y, p, mode=mode, batch=batch)        
-    
+              
     def mutltistep_pred(self, batch, bs, target_len, mode=0):
-        """ Predict directly the next x steps"""
+        """From an input array x, compute the prediction array p.
+        Used for models that can output multiple steps predictions.
+        Also plots predictions with input and target arrays.
+        """
         x = self.data.x_valid[:, batch:batch+bs, :] # (S, N, E)
         y = self.data.y_valid[:, batch:batch+bs, :] # (S, N, E)
         # Predict and plot
         p = self.predict(x=x, target_len=target_len)
         self.plot_predictions(x[:, batch, :], y[:, batch, :], p[:, batch, :], mode=mode, batch=batch)    
-        
+ 
+    def autoreg_pred(self, batch, mode, target_len):
+        """ From an input array x, compute the prediction array p
+        using an autoregressive method. Model does 1 prediction at a time.
+        The pred is then concat to input shifted by one to realize next pred.
+        """
+        # Select input arrays
+        x = self.data.x_valid[:, batch, :].unsqueeze(1) # (S, 1, E)
+        y = self.data.y_valid[:, batch, :].unsqueeze(1) # (S, 1, E)
+        # Init predictions
+        p = torch.zeros(target_len, x.shape[1], x.shape[2]).to(x.device) 
+        # Predict one time ahead and repeat 
+        for i in range(target_len):
+            p_valid = self.predict(x=x, target_len=1)
+            p[i] = p_valid
+            x = torch.cat((x[1:], p_valid)) # shift input one step
+        # Find target array using quick maths
+        idx = target_len // self.data.stride + 1
+        end =  -(self.data.stride- target_len%self.data.stride)
+        y = self.data.x_valid[end-target_len:end, batch+idx, :]
+        # Plot a batch
+        x = self.data.x_valid[:, batch, :] # (S, 1, E)
+        p = p.squeeze(1)
+        self.plot_predictions(x, y, p, mode=mode, batch=batch)         
     
     def plot_predictions(self, X, Y, P, mode, batch):
-        """ Plot a prediction with the input and target curves"""
+        """ Plot the predictions array P next to input X and target Y arrays
+        and save it to current run directory.
+        """
         # Convert to plotable arrays
         convert = lambda x: np.array(x.to('cpu').detach())
         if type(X) == torch.Tensor:
             X, Y, P = convert(X), convert(Y), convert(P)
-        # retrieve important params
+        # Retrieve important params
         len_x = len(X[:, mode])
         ow = Y.shape[0]
         target_len = P.shape[0]
@@ -81,12 +87,13 @@ class Predicter:
         ax.set_xlabel('timesteps')
         plt.title(f'Predictions of {target_len} time steps for batch {batch} and mode {mode}.')
         plt.legend()
+        # Save figure
         figname = self.path+f'pred_b{batch:03d}_m{mode:03d}'
         figure.savefig(figname)
         print(f'Saved prediction to {figname}')
 
 
-    def plot_attention(self, model, batch=0, mode=0):
+    def plot_mode_attention(self, model, batch=0, mode=0):
         """ Plot attention weights"""
         # 2D attention
         alphas = model.alphas.to('cpu').detach()
@@ -104,7 +111,7 @@ class Predicter:
         plt.savefig(self.path+f'1D_attention')
         return(alphas)
     
-    def plot_single_attention(self, model, batch=0, timestep=0):
+    def plot_time_attention(self, model, batch=0, timestep=0):
         """ Plot attention weights"""
         # 2D attention
         alphas = model.alphas.to('cpu').detach() # (S, N, T)
@@ -128,24 +135,31 @@ class Predicter:
 if __name__ == '__main__':
         
     path = 'runs/run_01/'
-    # Create Dataset
-    data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 8), multivar=True)
-    data.PrepareDataset(in_out_stride=(100, 20, 50))
+    # Import and define dataset
+    data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 10), multivar=True)
+    data.PrepareDataset(in_out_stride=(200, 30, 100))
+    print(data)
+
+
 
     # Create Model
     model = LSTM_EncoderDecoder(data.x_train.shape[2], 32).to(data.device)
     #model = RealTransfo(d_model=128, nhead=8).to(data.device)
     #model = LSTM_Attention(data.x_train.shape[2], 32).to(data.device)
-    #model = MultiScaleLSTMA(data.x_train.shape[2], 32).to(data.device)
+    #model = MultiScaleLSTMA(data.x_train.shape[2], 4).to(data.device)
     
     # Load
     predicter = Predicter(model, data, path)
     model.load_state_dict(torch.load(path+'best_model'))
     print(f'Loaded best_model from {path}')
+    
+
 
     # Predict
-    #predicter.autoreg_pred(batch=0, mode=10, target_len=10)
-    predicter.mutltistep_pred(batch=0, mode=3, bs=4, target_len=data.ow)
-    #alphas = predicter.plot_attention(model, batch=0, mode=40)
-    #alphas = predicter.plot_single_attention(model, batch=0)
+    mode = 9
+    #predicter.autoreg_pred(batch=0, mode=10, target_len=100)
+    predicter.mutltistep_pred(batch=0, mode=mode, bs=128, target_len=data.ow+100)
+    #alphas = predicter.plot_mode_attention(model, batch=0, mode=mode)
 
+    #alphas = predicter.plot_time_attention(model, batch=0)
+    

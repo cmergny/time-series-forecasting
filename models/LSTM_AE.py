@@ -16,8 +16,8 @@ class Encoder(nn.Module):
         
     def forward(self, x):
         """ 
-        For S, N, H the Source length, Batch size and Hidden size:
-            x.shape = (S, N, H) : input
+        For S, N, E, H the Source length, Batch size, Input size and Hidden size:
+            x.shape = (S, N, E) : input
             out.shape = (S, N, H) : hidden states for all times
             hidden.shape = (1, N, H) : hidden state
             cell.shape = (1, N, H) : cell state

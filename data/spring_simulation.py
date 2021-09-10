@@ -3,7 +3,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-def ODE(X, t):
+def SpringsODE(X, t, M, R, B):
+    """Defines the fst order diff equations 
+    for the coupled spring-mass system.
+    Ex: y1 = X[0]    x1 = X[3]
+        y2 = X[1]    x2 = X[4]
+        y3 = X[2]    x3 = X[5]
+    F = (y1', y2', y3', x1', x2', x3') 
+    """
+    # Parameters
+    k = 1
+    n = len(X)//2
+    a = 1
+    
+    # Return Matrix
+    F = [0 for k in range(2*n)]
+    
+    # Intermediate spings
+    for i in range(0, n):
+        # F = Frappel -Ffrottements -Coupling
+        F[i] = - k/M[i]*(X[i+n]) - b*X[i] - a*k/M[i]*np.dot(R[i], X[:n])
+    
+    # Assign the derivatives
+    for i in range(n):
+        F[i+n] = X[i]
+    return F
+
+def CoupledSpringsODE(X, t):
     """Defines the fst order diff equations 
     for the coupled spring-mass system.
     Ex: y1 = X[0]    x1 = X[3]
@@ -14,17 +40,17 @@ def ODE(X, t):
     # Parameters
     k, m, l = 1, 1, 1
     n = len(X)//2
-    a = 0.
-    b = 0.
+    a = 0
+    b = 0.1
     F = [0 for k in range(2*n)]
 
     # First sping
-    F[0] = k/m * (X[n+1] - 2*X[n]) + a*np.sin(t)
+    F[0] = k/m * (X[n+1] - 2*X[n]) + a
     # Intermediate spings
     for i in range(1, n-1):
-        F[i] = k/m * (X[i+n+1] + X[i+n-1] - 2*X[i+n]) - b*X[i]
+        F[i] = k/m * (X[i+n+1] + X[i+n-1] - 2*X[i+n]) - b*X[i] + a*np.cos(X[n])
     # last spring    
-    F[n-1] = - k/m * (X[-1] - X[-2] - l) 
+    F[n-1] = - k/m * (X[-1] - X[-2] - l) + a*np.cos(X[n])
     # Assign the derivatives
     for i in range(n):
         F[i+n] = X[i]
@@ -36,14 +62,24 @@ def SimulateSpings(n, X=None, plot=True):
     of the nth spring.
     """
     # Initial conditions
-    X = [0 for k in range(n)] + [k+1 for k in range(n)] if X is None else X
-    X[-1] = 5
+    Mi = [np.random.randint(1, 8) for k in range(n)]
+    Xi = [np.random.randint(1,8) for k in range(n)]
+    X = [0 for k in range(n)] + Xi if X is None else X
+    # Friction
+    B = [0.1 for k in range(n)]
+    # Coupling matrice
+    R = np.zeros((n, n))
+    R[:, :3] = 1
+    B[:, :3] = 0
+    for i in range(n):
+        R[i, i] = 0
+    
     # time
-    stoptime = 300
-    t = np.linspace(0, stoptime, 3*stoptime)
+    stoptime = 800
+    t = np.linspace(0, stoptime, 2*stoptime)
 
     # Call the ODE solver.
-    sol = odeint(ODE, X, t)
+    sol = odeint(SpringsODE, X, t, args=(Mi, R, B))
     data = sol[:, n:]
     
     # Plot
@@ -61,7 +97,7 @@ def AnimateSprings(data):
     
     # Animation fig
     fig = plt.figure()
-    ax = plt.axes(xlim=(-10, 100), ylim=(-1, 1))
+    ax = plt.axes(xlim=(-10, 100), ylim=(-20, 1))
     lines = [ax.plot([], [],'o')[0] for k in range(n)]
 
     def init():
@@ -74,8 +110,8 @@ def AnimateSprings(data):
         """Updates each frame"""
         j = 0
         for line in lines:
-            x = data[i, j] + j*1 # seperate each sping
-            y = 0
+            x = data[i, j]  # seperate each sping
+            y = 0 - j*2
             j += 1
             line.set_data(x, y)
         return lines
@@ -97,9 +133,9 @@ def WriteSimulation(data, filename='data/spring_data.txt'):
     
 if __name__ == '__main__':
 
-    n = 8 # nbr of springs
-    data = SimulateSpings(n, plot=False) # array of xn(t)
-    #AnimateSprings(data) # Animation of motion
+    n = 10 # nbr of springs
+    data = SimulateSpings(n, plot=True) # array of xn(t)
+    AnimateSprings(data) # Animation of motion
     WriteSimulation(data)
 
         

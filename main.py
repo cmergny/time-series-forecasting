@@ -32,22 +32,27 @@ def makedir(overwrite=False):
     print(f'Created {path} directory.')
     return(path)
 
-
 ### MAIN
 
+import matplotlib.pyplot as plt
+import torch
 # Create current run dir
 path = makedir(overwrite=True) 
 # Import and define dataset
-data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 8), multivar=True)
-data.PrepareDataset(in_out_stride=(100, 20, 50))
+data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 10), multivar=True)
+data.PrepareDataset(in_out_stride=(200, 30, 100))
+print(data)
+
+
 
 # Create Model
 model = LSTM_EncoderDecoder(data.x_train.shape[2], 32).to(data.device)
 #model = RealTransfo(d_model=128, nhead=8).to(data.device)
 #model = LSTM_Attention(data.x_train.shape[2], 32).to(data.device)
-#model = MultiScaleLSTMA(data.x_train.shape[2], 32).to(data.device)
+#model = MultiScaleLSTMA(data.x_train.shape[2], 4).to(data.device)
+
+#model.load_state_dict(torch.load(path+'best_model'))
 
 # Training and saving model
 trainer = trainer.Trainer(model, data)
-trainer.train(epochs=100, bs=4, lr=8e-4, path=path)
-
+trainer.train(epochs=200, bs=256, lr=1e-3, path=path)

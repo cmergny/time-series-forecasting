@@ -46,7 +46,7 @@ class Data:
             data = np.loadtxt(filename)[:, 1:]
             
         elif filename == "data/spring_data.txt":
-            data = np.loadtxt(filename)  
+            data = np.loadtxt(filename)[100:, :] 
         # Pod from Berangere
         else:
             data = np.loadtxt(filename).reshape(305, 305, 3)  # Time, Mode, an(t)
@@ -58,9 +58,9 @@ class Data:
         print(f'Using data from {filename}')
         return(self.Normalise(data))
     
-    def GenerateData(self, tf=2*np.pi, length=400, modes=range(10)):
+    def GenerateData(self, tf=2*np.pi, nbr_points=2000, modes=range(10)):
         """Generate artificial data with sinusoidal shape"""
-        t = np.linspace(0.0, tf, length) # time array
+        t = np.linspace(0.0, tf*6, nbr_points) # time array
         data = np.zeros((t.size, len(modes)))
         # Amplitude modulation
         for idx, i in enumerate(modes):
@@ -79,7 +79,10 @@ class Data:
         """Normalise data for training"""
         for i in range(data.shape[1]):
             data[:, i] -= np.mean(data[:, i])  # remove mean value
-            data[:, i] /= np.max(np.abs(data[:, i]))  # normalize
+            # normalize
+            max = np.max(np.abs(data[:, i]))
+            if max > 0: # make sure no div by 0
+                data[:, i] /= max   
         return data
 
     def Quantization(self, round=1e3):
@@ -101,7 +104,7 @@ class Data:
         self.iw, self.ow, self.stride = in_out_stride  # input window, output window, stride
         x_train, y_train = self.WindowedDataset(self.data_train)
         x_valid, y_valid = self.WindowedDataset(self.data_test)
-        # Noise
+        # Add Noise for no overfit
         x_train = x_train + np.random.normal(0, 0.02, x_train.shape) if noise else x_train
         # reshape
         if not self.multivar:

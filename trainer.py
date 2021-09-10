@@ -14,6 +14,7 @@ class Trainer():
         self.data = mydata
         
     def step(self, input_tensor, target_tensor, n_batches, training=False):
+        # PROBLEM if x.shape[1] is not divisible by bs then the element are not taken !!!
         """ Per batch training step"""
         batch_loss = 0
         # Iterate by batch
@@ -27,12 +28,20 @@ class Trainer():
             # Calling model
             outputs = self.model(input_batch, target_len=self.data.ow)
             loss = self.criterion(outputs, target_batch)
+            #loss = self.compute_loss(outputs, target_batch)
             batch_loss += loss
             # Backpropagating 
-            if training: 
+            if training:
                     loss.backward()
                     self.optimizer.step()
         return(batch_loss/n_batches)
+        
+    def compute_loss(self, output, target):
+        # (T, N, E) 
+        loss = torch.sum(torch.abs((output-target)), dim=0)
+        # (N, E)
+        loss = torch.mean(loss)
+        return(loss)
         
     def train(self, epochs, bs, lr, path):
         """Train the NN for a set number of epochs"""
@@ -42,23 +51,33 @@ class Trainer():
         self.epochs = epochs
         self.test_loss = np.full(epochs, np.nan) 
         self.valid_loss = np.full(epochs, np.nan) 
-        self.best_loss = 1e10
+        self.best_loss = 1e10 # badly written I know
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9)
         #self.optimizer = NoamOpt(d_model=1e4, warmup=300, optimizer=self.optimizer)
         self.criterion = nn.MSELoss()
         
-        n_batches_test = int(self.data.x_train.shape[1]/bs) 
-        n_batches_valid = int(self.data.x_valid.shape[1]/bs) 
+        n_batches_train = int(self.data.x_train.shape[1]/bs) 
+        n_batches_valid = int(self.data.x_valid.shape[1]/bs)
+        
+        # Normalisation necessary for NN training
+        
+        input_train = self.data.x_train.detach().clone().to(self.data.device)
+        input_valid = self.data.x_valid.detach().clone().to(self.data.device)
+        """
+        for i in range(input_train.shape[2]):
+            input_train[:, :, i] /= torch.max(torch.abs(input_train[:, :, i]))
+            input_valid[:, :, i] /= torch.max(torch.abs(input_valid[:, :, i]))
+        """
         
         with trange(epochs) as tr:
             for ep in tr:
                 # training loop
                 self.model.train()
-                self.test_loss[ep] = self.step(self.data.x_train, self.data.y_train, n_batches_test, training=True) 
+                self.test_loss[ep] = self.step(input_train, self.data.y_train, n_batches_train, training=True) 
                 # evaluation loop
                 self.model.eval()
                 with torch.no_grad():
-                    self.valid_loss[ep] = self.step(self.data.x_valid, self.data.y_valid, n_batches_valid)
+                    self.valid_loss[ep] = self.step(input_valid, self.data.y_valid, n_batches_valid)
                 # Every 10 ep check if valid loss is the best 
                 if self.valid_loss[ep] < self.best_loss and ep%10==0:
                     # then save model
