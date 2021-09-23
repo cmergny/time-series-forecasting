@@ -1,3 +1,10 @@
+# Module used for importing arrays of data
+# in the multiples files found in the dir data/
+# Imports may differ accoring to the file, feel free
+# to customize it.
+# Splits and convert data for pytorch neural network
+# training.
+
 ### IMPORTS
 
 import torch
@@ -10,33 +17,34 @@ import matplotlib.pyplot as plt
 ### CLASSES
 
 class Data:
-    """Contains imported or generated multivariate time series
-       Attributes structures the data for ML training"""
+    """Contains imported or generated multivariate time series.
+    Data files must have 2 columns. (nbr of time steps, nbr of variables)
+    For training, each mode is cut into multiple sub windows.
+    x_train.shape = (S, N, E) 
+    y.train.shape = (T, N, E)
+    with S and T the (resp) source and target length, N the number of subwindows for 
+    each mode, and E the total number of modes (or variables).
+    """
        
-    def __init__(self, modes=range(10), nbr_snaps=-1, filename=None, multivar=False) -> None:
-        self.x_train, self.y_train = [], []
-        self.x_valid, self.y_valid = [], []
+    def __init__(self, modes=range(10), final_time=-1, filename=None, multivar=True) -> None:
         self.multivar = multivar
         self.modes = modes
-        # Generate
-        if filename == None:
-            self.data = self.GenerateData(modes=modes)
-            self.filename = 'generated_sinus'
-        # or Import
-        else:
-            self.filename = filename
-            self.data = self.ImportData(filename, modes, nbr_snaps)
-        self.Quantization(round=4)
+        self.filename = filename
+        self.data = self.import_data(filename, modes, final_time)
+        self.data = np.round(self.data, 4) # Discretizes the data
+        self.data = self.data[:final_time, modes] # Truncation
+        self.data = self.normalise(self.data)
         
-    ## INITIALASING THE DATA
-    
-    def ImportData(self, filename, modes=range(10), nbr_snaps=-1):
-        """Open and read coeff file. Truncate and normalize"""
-        # Import
+    def import_data(self, filename, modes=range(10), final_time=-1):
+        """Import data array of 2 columns: (timesteps)| (modes)
+        Don't mind
+        """
+        # Import varies accoring to input file
         if filename[-4:] == ".dat":
             with open("Data/podcoeff_095a05.dat", "rb") as f:
                 egeinvalue = pickle.load(f)
-                data = np.array(pickle.load(f))      
+                data = np.array(pickle.load(f))    
+        # Other Pod Berange    
         elif filename[-7:] == ".pickle":
             with open(filename, "rb") as handle:
                 eigd, eigvec, meanfield, x, y, z = pickle.load(handle)
@@ -44,100 +52,71 @@ class Data:
         # Pod from Yann
         elif filename[-2:] == ".d":
             data = np.loadtxt(filename)[:, 1:]
-            
+        # Spring simualtions
         elif filename == "data/spring_data.txt":
             data = np.loadtxt(filename)[100:, :] 
         # Pod from Berangere
-        else:
+        elif filename == "coeff":
             data = np.loadtxt(filename).reshape(305, 305, 3)  # Time, Mode, an(t)
-            data = data[:, :, 2]
-            data = np.transpose(data)
-            
-        # Truncate and Normalise
-        data = data[:nbr_snaps, modes]
+            data = np.transpose(data[:, :, 2])
+        else:
+            data = np.loadtxt(filename)
         print(f'Using data from {filename}')
-        return(self.Normalise(data))
-    
-    def GenerateData(self, tf=2*np.pi, nbr_points=2000, modes=range(10)):
-        """Generate artificial data with sinusoidal shape"""
-        t = np.linspace(0.0, tf*6, nbr_points) # time array
-        data = np.zeros((t.size, len(modes)))
-        # Amplitude modulation
-        for idx, i in enumerate(modes):
-            f = float((i+1)* 0.1)
-            f_m = f / 2
-            A = 1
-            B = 0.0
-            ct = A * np.cos(2 * np.pi * f * t)
-            mt = B * np.cos(2 * np.pi * f_m * t + np.random.rand())
-            data[:, idx] = (1 + mt / A) * ct
-        print('Using artificialy generated sinusoidal dataset.')
-        # Return Nomalised dataset
-        return(self.Normalise(data))
-    
-    def Normalise(self, data):
-        """Normalise data for training"""
+
+    def normalise(self, data):
+        """normalise data if necessary."""
         for i in range(data.shape[1]):
             data[:, i] -= np.mean(data[:, i])  # remove mean value
             # normalize
             max = np.max(np.abs(data[:, i]))
             if max > 0: # make sure no div by 0
                 data[:, i] /= max   
-        return data
-
-    def Quantization(self, round=1e3):
-        """Rounds the continous value in the data by quantas"""
-        self.data = np.round(self.data, round)
+        return data        
         
     ## PREPARING THE DATA
     
-    def PrepareDataset(self, split=0.7, noise=None, in_out_stride=(100, 30, 10), device=None):
+    def PrepareDataset(self, split=0.7, noise=None, in_out_stride=(100, 30, 10)):
         """Split dataset into four torch tensors x_train, x_valid, y_train, y_valid"""
         # Nested Function
         def Convert2Torch(*args, device):
             """Convert numpy array to torch tensor with device cpu or gpu."""
             return [torch.from_numpy(arg).float().to(device) for arg in args]
-        # Split
-        self.split = split
-        self.data_train, self.data_test = self.SplitDataset()
+        # Split into training and validation set
+        self.data_train, self.data_test = self.split_dataset(split)
         # Generate Inputs and Targets
         self.iw, self.ow, self.stride = in_out_stride  # input window, output window, stride
-        x_train, y_train = self.WindowedDataset(self.data_train)
-        x_valid, y_valid = self.WindowedDataset(self.data_test)
+        x_train, y_train = self.windowed_data(self.data_train)
+        x_valid, y_valid = self.windowed_data(self.data_test)
         # Add Noise for no overfit
-        x_train = x_train + np.random.normal(0, 0.02, x_train.shape) if noise else x_train
-        # reshape
+        x_train = x_train + np.random.normal(0, 0.05, x_train.shape) if noise else x_train
+        x_valid = x_valid + np.random.normal(0, 0.05, x_valid.shape) if noise else x_valid
+        # Reshape into a (S, N*E, 1) array if not multivar
         if not self.multivar:
             Reshaping = lambda x: x.reshape(-1, x.shape[1]*x.shape[2], 1)
-            x_train = Reshaping(x_train)
-            y_train = Reshaping(y_train)
-            x_valid = Reshaping(x_valid)
-            y_valid = Reshaping(y_valid)
+            x_train, y_train, x_valid, y_valid = [Reshaping(a) for a in [ x_train, y_train, x_valid, y_valid]]
         # Convert tensor and set device
-        self.device = device if device is not None else torch.device("cuda")  # train on cpu or gpu
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # train on cpu or gpu
         self.x_train, self.y_train, self.x_valid, self.y_valid =  Convert2Torch(x_train, y_train, x_valid, y_valid, device=self.device)
-        self.train_ds = CustomDataset(self.x_train, self.y_train)
-        self.valid_ds = CustomDataset(self.x_valid, self.y_valid)
-        
-    def SplitDataset(self, common=0.2):
+
+    def split_dataset(self, split, common=0.0):
         """
         Splits dataset into training and testing sets.
         split [float] : 0 < split <1, pourcentage of data to go in training set
         """
-        idx = int(self.split * len(self.data))
+        idx = int(split * len(self.data))
         common = int(common * len(self.data))
         data_train = self.data[:idx, :]  # Add one dimension to array
         data_test = self.data[idx - common :, :]
         return(data_train, data_test)
     
-    def WindowedDataset(self, data_group):
+    def windowed_data(self, data_group):
         """Subsamples time serie into an array X of multiple windows of size iw, 
         and an array Y including target windows of size ow.
         iw [int]     : number of y samples to give model
         ow [int]     : number of future y samples to predict
         stride [int] : spacing between windows
-        nbr_features [int] : number of features (i.e., 1 for us, but we could have multiple features)
-        X, Y [np.array] : arrays with correct dimensions for LSTM (input/output window size, # of samples, # features])
+        X, Y [np.array] : arrays with correct dimensions for LSTM 
+            (input/output window size, # of samples, # features])
         """
         # Compute how much samples required
         nbr_samples = (data_group.shape[0] - self.iw - self.ow) // self.stride + 1
@@ -180,26 +159,12 @@ class Data:
         fig, ax = plt.subplots()
         ax.plot(x_first)
         ax.plot(x_last)
-        ax.set_ylabel('amplitude')
-        ax.set_xlabel('timesteps')
+        ax.set_ylabel('Amplitude')
+        ax.set_xlabel('Timesteps')
         plt.title('The first and last elements of the dataset')
         plt.savefig(path+'data_exemples')
            
-class CustomDataset(Dataset):
-    "Used in the data class"
-    def __init__(self, x, y) -> None:
-        self.x = x # (S, N, E)
-        self.y = y # (T, N, E)
-        
-    def __len__(self) -> int:
-        return(self.x.shape[1])
-    
-    def __getitem__(self, index: int):
-        return(self.x[:, index, :], self.y[:, index, :])
-    
-
-#%% MAIN
-if __name__ == "__main__":
-    mydata = Data()
-    mydata.PrepareDataset(device="cpu")
-    print(mydata)
+           
+### MAIN
+if __name__ == '__main__':
+    print('This module is not a main script.')

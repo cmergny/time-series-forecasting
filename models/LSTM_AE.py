@@ -38,7 +38,7 @@ class Decoder(nn.Module):
     def forward(self, x, hidden, cell):
         """ 
         For S, N, H the Source length, Batch size and Hidden size:
-            x.shape = (1, N, H) : input
+            x.shape = (1, N, E) : input
             hidden.shape = (1, N, H) : hidden state
             cell.shape = (1, N, H) : cell state
             out.shape = (N, E) : hidden state
@@ -50,16 +50,19 @@ class Decoder(nn.Module):
 class LSTM_EncoderDecoder(nn.Module):
     """
     Use the two Encoder and Decoder classes to train a LSTM neural network
-    Can also make predictions once the NN is trained
+    Can also make predictions once the NN is trained.
     """
     def __init__(self, input_size, hidden_size):
         """ Initialising variables with param and Encoder/Decoder classes"""
         super().__init__()
+        self.name = 'LSTM_AE'
         self.encoder = Encoder(input_size, hidden_size)
         self.decoder = Decoder(input_size, hidden_size)
         
 
     def forward(self, x, target_len):
+        """Multistep prediction model: the decoder will
+        loop target_len times to create as much predictions."""
         # Initialise outputs (targetlen, bs, # features)
         outputs = torch.zeros(target_len,  x.shape[1], x.shape[2]).to(x.device)
         # Initialise h,c and call Encoder 
@@ -67,7 +70,6 @@ class LSTM_EncoderDecoder(nn.Module):
         # Initialise Decoder
         input_d = x[-1, :, :].unsqueeze(0) # shape(bs, n_features)
         hidden_d, cell_d = hidden_e, cell_e
-        
         # Iterate by len of prediction
         for t in range(target_len):
             # Call Decoder
@@ -82,3 +84,6 @@ class LSTM_EncoderDecoder(nn.Module):
         #print(f'Saved model to {path}')
         return None
 
+### MAIN
+if __name__ == '__main__':
+    print('This module is not a main script.')

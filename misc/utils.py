@@ -1,5 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
+
+### IMPORT DATA OLD FUNCTIONS
+
+def GenerateData(self, tf=2*np.pi, nbr_points=2000, modes=range(10)):
+    """Generate artificial data with sinusoidal shape"""
+    t = np.linspace(0.0, tf*6, nbr_points) # time array
+    data = np.zeros((t.size, len(modes)))
+    # Amplitude modulation
+    for idx, i in enumerate(modes):
+        f = float((i+1)* 0.1)
+        f_m = f / 2
+        A = 1
+        B = 0.0
+        ct = A * np.cos(2 * np.pi * f * t)
+        mt = B * np.cos(2 * np.pi * f_m * t + np.random.rand())
+        data[:, idx] = (1 + mt / A) * ct
+    print('Using artificialy generated sinusoidal dataset.')
+    # Return Nomalised dataset
+    return(self.Normalise(data))
+
 ### INTRASIC DIM ESTIMATORS
 
 def PCA(data, thresh=0.5):
