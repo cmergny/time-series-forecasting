@@ -62,6 +62,7 @@ class Data:
         else:
             data = np.loadtxt(filename)
         print(f'Using data from {filename}')
+        return(data)
 
     def normalise(self, data):
         """normalise data if necessary."""
@@ -97,7 +98,8 @@ class Data:
         # Convert tensor and set device
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # train on cpu or gpu
         self.x_train, self.y_train, self.x_valid, self.y_valid =  Convert2Torch(x_train, y_train, x_valid, y_valid, device=self.device)
-
+        print(self)
+        
     def split_dataset(self, split, common=0.0):
         """
         Splits dataset into training and testing sets.

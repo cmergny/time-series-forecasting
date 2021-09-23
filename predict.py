@@ -44,7 +44,7 @@ class Predicter:
             outputs = self.model(x, target_len)
             return(outputs)
         
-    def multi_pred(self, target_len, autoregressive=False):
+    def multi_pred(self, target_len, autoregressive=False, batch=0):
         """ Two methods for predicting multiple time steps in time:
         Default: Model is already trained to predict multiple steps.
         Autoreg: Model can only do one pred at a time so it iteratively
@@ -62,7 +62,7 @@ class Predicter:
                 p[i] = self.predict(x, 1)
                 x = torch.cat((x[1:], p[i])) # shift input one step
         # Plot predictions
-        self.plot_pred(p)
+        self.plot_pred(p, batch)
         return(p)
     
     def save_fig(self, figname):
@@ -147,7 +147,7 @@ if __name__ == '__main__':
         
     path = 'runs/run_01/'
     # Import and define dataset
-    data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 2))
+    data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 10))
     data.PrepareDataset(noise=True, in_out_stride=(200, 30, 100))
 
     # Initialize model by uncommenting one line

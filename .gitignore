@@ -1,4 +1,4 @@
-
+.gitignore
 runs/*
 figures/*
 data/*.pickle
@@ -10,4 +10,6 @@ utils/__pycache__/*
 .vscode/*
 cluster/output*
 cluster/error*
+misc/Biblio_Summary.models
+misc/README.md
 

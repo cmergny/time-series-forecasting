@@ -56,8 +56,9 @@ def create_savedir(overwrite=False):
 saving_dir = create_savedir(overwrite=True) 
 
 # Import and define dataset
-data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 2))
+data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 10))
 data.PrepareDataset(noise=True, in_out_stride=(200, 30, 100))
+
 
 # Initialize model by uncommenting one line
 H = 32 # Hidden size (H=4 for MA)
@@ -72,4 +73,4 @@ model = MultiScaleLSTMA(E, H).to(data.device)
 
 # Training and saving model
 trainer = trainer.Trainer(model, data)
-trainer.train(epochs=80, bs=256, lr=1e-3, saving_dir=saving_dir)
+trainer.train(epochs=80, bs=116, lr=1e-3, saving_dir=saving_dir)

@@ -1,11 +1,21 @@
+# Numerical simulation of Harmonic Oscillators
+# Generates the spring_data.txt file
+# This zrticifial data is used to validate
+# the neural networks.
+
+
+### IMPORTS
+
 from scipy.integrate import odeint
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+### FUNCTIONS
+
 def SpringsODE(X, t, M, R):
     """Defines the fst order diff equations 
-    for the coupled spring-mass system.
+    for the spring-mass system.
     Ex: y1 = X[0]    x1 = X[3]
         y2 = X[1]    x2 = X[4]
         y3 = X[2]    x3 = X[5]
@@ -34,24 +44,17 @@ def SimulateSpings(n, X=None, plot=True):
     of the nth spring.
     """
     # Initial conditions
-    #Mi = [np.random.randint(1, 8) for k in range(n)]
-    #Xi = [np.random.randint(1, 8) for k in range(n)]
-    Mi = [1, 1]
-    Xi = [1, -1]
+    Mi = [np.random.randint(1, 8) for k in range(n)]
+    Xi = [np.random.randint(1, 8) for k in range(n)]
     X = [0 for k in range(n)] + Xi if X is None else X
     # Coupling matrice
-    R = np.zeros((n, n))
-    #R[:, :3] = 1
-    #R[3, :] = 0
-        
+    R = np.zeros((n, n)) # no coupling
     # time
-    stoptime = 800
+    stoptime = 20000
     t = np.linspace(0, stoptime, 2*stoptime)
-
     # Call the ODE solver.
     sol = odeint(SpringsODE, X, t, args=(Mi, R))
     data = sol[:, n:]
-    
     # Plot
     if plot:
         fig, ax = plt.subplots()
@@ -64,12 +67,11 @@ def SimulateSpings(n, X=None, plot=True):
 def AnimateSprings(data):
     """ Animate the mvt of coupled spings with dots"""
     n = len(data[0, :]) # nbr of spings
-    
     # Animation fig
     fig = plt.figure()
     ax = plt.axes(xlim=(-10, 100), ylim=(-20, 1))
     lines = [ax.plot([], [],'o')[0] for k in range(n)]
-
+    
     def init():
         """Init function"""
         for line in lines:
@@ -85,7 +87,7 @@ def AnimateSprings(data):
             j += 1
             line.set_data(x, y)
         return lines
-
+    
     # run the animation
     ani = FuncAnimation(fig, animate, init_func=init, frames=len(data[:,0]), interval=30, blit=True)
     plt.show()
@@ -103,10 +105,10 @@ def WriteSimulation(data, filename='data/spring_data.txt'):
     
 if __name__ == '__main__':
 
-    n = 2 # nbr of springs
+    n = 10 # nbr of springs
     data = SimulateSpings(n, plot=False) # array of xn(t)
     AnimateSprings(data) # Animation of motion
-    #WriteSimulation(data)
+    WriteSimulation(data)
 
         
         
