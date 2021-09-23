@@ -1,4 +1,4 @@
-runs/*
+runs/run_*
 figures/*
 data/*.pickle
 data/*.d

@@ -98,7 +98,8 @@ class Predicter:
             # Save figure with name set by mode
             figname = self.pred_path+figname
             self.save_fig(figname)
-    
+            plt.clear()
+            
     def plot_attention(self, batch=0):
         """ Plot the attention weights of the LSTM_A and Multiscale
         Neural netwotks. Figures are differ according to the model.
@@ -148,7 +149,7 @@ if __name__ == '__main__':
     path = 'runs/run_01/'
     # Import and define dataset
     data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 10))
-    data.PrepareDataset(noise=True, in_out_stride=(200, 30, 100))
+    data.prepare_dataset(noise=True, in_out_stride=(200, 30, 100))
 
     # Initialize model by uncommenting one line
     H = 32 # Hidden size (H=4 for MA)

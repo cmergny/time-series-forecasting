@@ -57,7 +57,7 @@ saving_dir = create_savedir(overwrite=True)
 
 # Import and define dataset
 data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 10))
-data.PrepareDataset(noise=True, in_out_stride=(200, 30, 100))
+data.prepare_dataset(noise=True, in_out_stride=(200, 30, 100))
 
 
 # Initialize model by uncommenting one line

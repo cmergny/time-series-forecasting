@@ -76,7 +76,7 @@ class Data:
         
     ## PREPARING THE DATA
     
-    def PrepareDataset(self, split=0.7, noise=None, in_out_stride=(100, 30, 10)):
+    def prepare_dataset(self, split=0.7, noise=None, in_out_stride=(100, 30, 10)):
         """Split dataset into four torch tensors x_train, x_valid, y_train, y_valid"""
         # Nested Function
         def Convert2Torch(*args, device):
