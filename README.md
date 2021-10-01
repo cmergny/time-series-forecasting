@@ -12,6 +12,12 @@ We started by building the classical LSTM Auto-Encoder from scratch, and then lo
 
 Python 3.x is required with *pytorch* installed. Having a cuda compatible GPU is strongly advised. You may also require to install *tqdm*, *glob* and *shutil* modules if not installed by default in your environnement.
 
+The best, easiest and fastest way to this, is by using conda and the environnement.yml file in this repo. In **the time-series-forecasting** folder open a terminal and type:
+
+     conda env create -f misc/environment.yml
+     
+this will create an conda environnement with the necessary modules to run theses scripts.
+
 ## Project layout
 --------
 
