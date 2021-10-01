@@ -98,7 +98,6 @@ class Predicter:
             # Save figure with name set by mode
             figname = self.pred_path+figname
             self.save_fig(figname)
-            plt.clear()
             
     def plot_attention(self, batch=0):
         """ Plot the attention weights of the LSTM_A and Multiscale
@@ -165,7 +164,7 @@ if __name__ == '__main__':
     x = data.x_valid # (S, :, E)
     y = data.y_valid # (T, :, E)
     # Load saved model
-    predicter = Predicter(model, path, x)
+    predicter = Predicter(model, path, x, y)
     predicter.load_weights()
     
     # Predictions
