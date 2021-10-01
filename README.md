@@ -18,9 +18,10 @@ Python 3.x is required with *pytorch* installed. Having a cuda compatible GPU is
 
 The best, easiest and fastest way to this, is by using conda and the environnement.yml file in this repo. In **the time-series-forecasting** folder open a terminal and type:
 
-     conda env create -f misc/environment.yml
+     conda env create -f misc/environment.yml -n TSF
+     conda activate TSF
      
-this will create an conda environnement with the necessary modules to run theses scripts.
+this will create a conda environnement called *TSF* with the necessary modules to run theses scripts. Once activated, run the scripts in the terminal.
 
 ## Project layout
 --------
