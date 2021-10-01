@@ -101,3 +101,7 @@ Finally for model that support it, the predicter class can also plot attention w
         predicter.plot_attention()
 
 Predictions and Attention Weights plots are saved in the loaded model directory in the preds/ and attention/ sub folders.
+
+## More Infos
+
+For more infos and figures on the model structures and training please take a look at the misc/summary.pdf file. 
