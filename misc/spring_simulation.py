@@ -50,7 +50,7 @@ def SimulateSpings(n, X=None, plot=True):
     # Coupling matrice
     R = np.zeros((n, n)) # no coupling
     # time
-    stoptime = 20000
+    stoptime = 800
     t = np.linspace(0, stoptime, 2*stoptime)
     # Call the ODE solver.
     sol = odeint(SpringsODE, X, t, args=(Mi, R))
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     n = 10 # nbr of springs
     data = SimulateSpings(n, plot=False) # array of xn(t)
     AnimateSprings(data) # Animation of motion
-    WriteSimulation(data)
+    #WriteSimulation(data)
 
         
         

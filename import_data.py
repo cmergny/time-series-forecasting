@@ -33,7 +33,7 @@ class Data:
         self.data = self.import_data(filename, modes, final_time)
         self.data = np.round(self.data, 4) # Discretizes the data
         self.data = self.data[:final_time, modes] # Truncation
-        self.data = self.normalise(self.data)
+        self.data = self.normalise(self.data) # todo: work with unormalised data
         
     def import_data(self, filename, modes=range(10), final_time=-1):
         """Import data array of 2 columns: (timesteps)| (modes)
@@ -41,7 +41,7 @@ class Data:
         """
         # Import varies accoring to input file
         if filename[-4:] == ".dat":
-            with open("Data/podcoeff_095a05.dat", "rb") as f:
+            with open("data/podcoeff_095a05.dat", "rb") as f:
                 egeinvalue = pickle.load(f)
                 data = np.array(pickle.load(f))    
         # Other Pod Berange    
@@ -56,7 +56,7 @@ class Data:
         elif filename == "data/spring_data.txt":
             data = np.loadtxt(filename)[100:, :] 
         # Pod from Berangere
-        elif filename == "coeff":
+        elif filename == "data/coeff":
             data = np.loadtxt(filename).reshape(305, 305, 3)  # Time, Mode, an(t)
             data = np.transpose(data[:, :, 2])
         else:

@@ -59,18 +59,17 @@ saving_dir = create_savedir(overwrite=True)
 data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 10))
 data.prepare_dataset(noise=True, in_out_stride=(200, 30, 100))
 
-
 # Initialize model by uncommenting one line
 H = 32 # Hidden size (H=4 for MA)
 E = data.x_train.shape[2] # Input size
 #model = LSTM_EncoderDecoder(E, H).to(data.device)
+model = LSTM_Attention(E, H).to(data.device)
 #model = Transformer(d_model=128, nhead=8).to(data.device)
-#model = LSTM_Attention(E, H).to(data.device)
-model = MultiScaleLSTMA(E, H).to(data.device)
+#model = MultiScaleLSTMA(E, H).to(data.device)
 
 # Load an retrain existing saved
 #model.load_state_dict(torch.load(saving_dir+'best_model'))
 
 # Training and saving model
 trainer = trainer.Trainer(model, data)
-trainer.train(epochs=80, bs=116, lr=1e-3, saving_dir=saving_dir)
+trainer.train(epochs=300, bs=112, lr=1e-3, saving_dir=saving_dir)

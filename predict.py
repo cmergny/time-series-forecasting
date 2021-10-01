@@ -148,15 +148,16 @@ if __name__ == '__main__':
     path = 'runs/run_01/'
     # Import and define dataset
     data = import_data.Data(filename='data/spring_data.txt', modes=range(0, 10))
-    data.prepare_dataset(noise=True, in_out_stride=(200, 30, 100))
+    data.prepare_dataset(noise=True, in_out_stride=(200, 20, 100))
+
 
     # Initialize model by uncommenting one line
     H = 32 # Hidden size (H=4 for MA)
     E = data.x_train.shape[2] # Input size
     #model = LSTM_EncoderDecoder(E, H).to(data.device)
-    #model = LSTM_Attention(E, H).to(data.device)
+    model = LSTM_Attention(E, H).to(data.device)
     #model = Transformer(d_model=128, nhead=8).to(data.device)
-    model = MultiScaleLSTMA(E, H).to(data.device)
+    #model = MultiScaleLSTMA(E, H).to(data.device)
     
     
     # Data to predict
