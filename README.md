@@ -8,7 +8,7 @@ In particular, one interest of this study is the do forecasting on POD modes des
 We started by building the classical LSTM Auto-Encoder from scratch, and then looked at more complex models involving Attention.
 
  <p align="center">
-<img src=misc/figures/Mode002Batch000_bis.png width="400" />
+<img src=misc/figures/Mode002Batch000.png width="400" />
 </p>
 
 ## Requirements
