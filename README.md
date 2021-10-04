@@ -37,11 +37,11 @@ Import your data, build the model, train and predict.
 <ul>
 <li> <b>import_data.py</b> : Data class used by main.py to import arrays from the data/ folder and organises the data into a pytorch compatible dataset. </li>
 
-<li>  <b>main.py</b>  : calls the import data, defines and train a model. The model best weights are saved into a run/ folder.</li>
+<li>  <b>main.py</b>  : calls the import data, defines and train a model. The model best weights are saved into a run/run_** folder.</li>
 
 <li>  <b>trainer.py</b>  : class called by main.py to train and a save a model. Mean square error is used to compute the training and validation losses.</li>
 
-<li>  <b>predict.py</b>  : requires a trained saved model. Allow to make prediction on 
+<li>  <b>predict.py</b>  : requires a the saving file of a pretrained model. Allows to make prediction on 
 unseen data. Plots the results in the model directory. </li>
 </ul>
 
