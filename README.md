@@ -3,9 +3,9 @@
 
 This repositery is the result of a master degree internship at the LISN lab on deep learning for fluid dynamics.
 I've been interested at the different models that could be used for making time predictions on multivariate signals.
-In particular, one interest of this study is the do forecasting on POD modes describing a turbulent flow. 
+In particular, one interest of this study is to do forecasting on POD modes describing a turbulent flow. 
 
-We started by building the classical LSTM Auto-Encoder from scratch, and then looked at more complex models involving Attention.
+We started by building the classical LSTM Auto-Encoder from scratch, and then looked at more complex models involving the Attention mecanism.
 
  <p align="center">
 <img src=misc/figures/Mode002Batch000.png width="400" />
