@@ -1,5 +1,7 @@
-# Time Series Forecasting with Neural Networks
---------
+<h3 align="center">
+
+	Time Series Forecasting with Neural Networks
+</h3>
 
 <p align="center">
     <a href="https://github.com/catppuccin/vim/stargazers"><img src="https://img.shields.io/github/stars/cmergny/time-series-forecasting?colorA=363a4f&colorB=b7bdf8&style=for-the-badge"></a>
