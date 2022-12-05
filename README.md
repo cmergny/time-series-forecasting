@@ -1,6 +1,12 @@
 # Time Series Forecasting with Neural Networks
 --------
 
+<p align="center">
+    <a href="https://github.com/catppuccin/vim/stargazers"><img src="https://img.shields.io/github/stars/cmergny/time-series-forecasting?colorA=363a4f&colorB=b7bdf8&style=for-the-badge"></a>
+    <a href="https://github.com/catppuccin/vim/issues"><img src="https://img.shields.io/github/issues/cmergny/time-series-forecasting?colorA=363a4f&colorB=f5a97f&style=for-the-badge"></a>
+    <a href="https://github.com/catppuccin/vim/contributors"><img src="https://img.shields.io/github/contributors/cmergny/time-series-forecasting?colorA=363a4f&colorB=a6da95&style=for-the-badge"></a>
+</p>
+
 This repositery is the result of a master degree internship at the LISN lab on deep learning for fluid dynamics.
 I've been interested at the different models that could be used for making time predictions on multivariate signals.
 In particular, one interest of this study is to do forecasting on POD modes describing a turbulent flow. 
